@@ -9,8 +9,8 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
     var topSpeed: Float = 0f
     var descent: Double = 0.0
     var ascent: Double = 0.0
-    var lastUsedAltitude: Double = -1000.0
     var isPaused: Boolean = false
+    var currentLocationVertical: Location = Location("dummyprovider")
 
     fun reset() {
         distance = 0f
@@ -39,6 +39,7 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
     fun set(newLocation: Location) {
         if (currentLocation.altitude == 0.0 || isPaused) {
             currentLocation = newLocation
+            currentLocationVertical = newLocation
             return
         }
 
@@ -51,14 +52,10 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
             topSpeed = newLocation.speed * 3600 / 1000
         }
 
-        if (lastUsedAltitude == -1000.0) {
-            lastUsedAltitude = newLocation.altitude
-        }
-        val altitudeDelta:Double = newLocation.altitude - lastUsedAltitude
-        Log.d("Trip", "altitudeDelta: " + altitudeDelta+", newLocation.verticalAccuracyMeters:" + newLocation.verticalAccuracyMeters )
+        val altitudeDelta:Double = newLocation.altitude - currentLocationVertical.altitude
+        Log.d("Trip", "altitudeDelta: " + altitudeDelta)
 
-        if (!newLocation.hasAccuracy () || altitudeDelta > newLocation.verticalAccuracyMeters) {
-            Log.d("Trip", "altitudeDelta: " + altitudeDelta)
+        if (!newLocation.hasAccuracy () || altitudeDelta.absoluteValue > newLocation.verticalAccuracyMeters) {
             if (altitudeDelta > 0.0) {
                 Log.d("Trip", "Adding to ascent")
                 ascent += altitudeDelta
@@ -66,10 +63,11 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
                 Log.d("Trip", "Adding to descent")
                 descent += altitudeDelta.absoluteValue
             }
-            lastUsedAltitude = newLocation.altitude
-        }
-        Log.d("Trip", "ascent: " + ascent + ", descent" + descent)
 
-        currentLocation = newLocation
+            currentLocationVertical = newLocation
+        }
+
+        // do not set currentLocationVertical if not used
+        Log.d("Trip", "ascent: " + ascent + ", descent: " + descent)
     }
 }

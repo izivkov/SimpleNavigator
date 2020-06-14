@@ -6,13 +6,14 @@ import android.location.Geocoder
 import android.location.Location
 import android.util.Log
 import java.io.IOException
+import java.lang.String.*
 import java.util.*
 
 class UnitConverter() {
     private var context: Context? = null
     private var location: Location? = null
-    private var unitType: UNIT_TYPE? = null;
-    public var isInitialized: Boolean = false;
+    private var unitType: UNIT_TYPE? = null
+    var isInitialized: Boolean = false
 
     enum class UNIT_TYPE {
         IMPERIAL,
@@ -26,7 +27,7 @@ class UnitConverter() {
         this.context = context;
         this.location = location
         this.unitType = getUnits ()
-        isInitialized = true;
+        isInitialized = true
     }
 
     private fun getCountry(): String {
@@ -35,11 +36,11 @@ class UnitConverter() {
         if (context == null || location == null) {
             return ""
         }
-        val gcd: Geocoder = Geocoder(context, Locale.getDefault())
+        val gcd = Geocoder(context, Locale.getDefault())
 
         try {
             val addresses: List<Address> = gcd.getFromLocation(location!!.latitude, location!!.longitude, 1)
-            var countryCode: String = ""
+            var countryCode = ""
 
             if (addresses.size > 0) {
                 countryCode = addresses.get(0).countryCode
@@ -67,7 +68,7 @@ class UnitConverter() {
             value *= METERS_TO_FEET
             unit = "ft"
         }
-        return java.lang.String.format("%s %.${0}f %s", label, value, unit)
+        return format("%s %.${0}f %s", label, value, unit)
     }
 
     fun formatSpeed (kmPerHour: Float, label: String): String {
@@ -77,7 +78,7 @@ class UnitConverter() {
             value *= KM_TO_MILES
             unit = "mph"
         }
-        return java.lang.String.format("%s %.${0}f %s", label, value, unit)
+        return format("%s %.${0}f %s", label, value, unit)
     }
 
     fun formatKm (kms: Float, label: String): String {
@@ -87,6 +88,6 @@ class UnitConverter() {
             value *= KM_TO_MILES
             unit = "miles"
         }
-        return java.lang.String.format("%s %.${0}f %s", label, value, unit)
+        return format("%s %.${1}f %s", label, value, unit)
     }
 }
