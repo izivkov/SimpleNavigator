@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageButton
@@ -74,14 +75,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                 lastLocation = p0.lastLocation
 
-                if (!Companion.unitConverter.isInitialized) {
-                    Companion.unitConverter.init(applicationContext, lastLocation)
+                if (!unitConverter.isInitialized) {
+                    unitConverter.init(applicationContext, lastLocation)
                 }
 
                 val latLong = LatLng(lastLocation.latitude, lastLocation.longitude)
-                placeMarkerOnMap(latLong)
+                placeMarkerOnMap()
 
-                var currentZoom = 0f
+                val currentZoom:Float
                 if (map.getCameraPosition().zoom >= 8.0) {
                     currentZoom = map.getCameraPosition().zoom
                 } else {
@@ -102,7 +103,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
-    fun showYesNoTripResetDialog(view: View?) {
+    fun showYesNoTripResetDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Trip Reset")
         builder.setMessage("Are you sure you like to reset the data for the current trip?")
@@ -117,7 +118,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         builder.show()
     }
 
-    fun showYesNoExitDialog(view: View?) {
+    fun showYesNoExitDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Exiting App")
         builder.setMessage("Are you sure you like to exit? Trip data will be lost")
@@ -133,7 +134,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     fun setupButtons() {
         val resetButton: Button = findViewById(R.id.resetTripButton)
         resetButton.setOnClickListener {
-            showYesNoTripResetDialog(null)
+            showYesNoTripResetDialog()
         }
 
         val pauseResumeButton: ImageButton = findViewById(R.id.pauseResumeButton)
@@ -151,7 +152,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         val exitButton: Button = findViewById(R.id.exitButton)
         exitButton.setOnClickListener {
-            showYesNoExitDialog(null)
+            showYesNoExitDialog()
         }
     }
 
@@ -212,7 +213,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(0.0, 0.0)))
     }
 
-    private fun placeMarkerOnMap(location: LatLng) {
+    private fun placeMarkerOnMap() {
     }
 
     private fun startLocationUpdates() {
@@ -261,8 +262,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun createLocationRequest() {
         locationRequest = LocationRequest()
-        locationRequest.interval = 2000
-        locationRequest.fastestInterval = 1000
+        locationRequest.interval = 5000
+        locationRequest.fastestInterval = 5000
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         val builder = LocationSettingsRequest.Builder()

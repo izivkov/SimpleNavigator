@@ -1,15 +1,18 @@
 <resources>
     <string name="app_name">SimpleNavigator</string>
     <string name="title_activity_maps">SimpleNavigator</string>
-    <string name="time"></string>
-    <string name="speed"></string>
-    <string name="altitude"></string>
-    <string name="distance"></string>
-    <string name="descent"></string>
-    <string name="ascent"></string>
-    <string name="topSpeed"></string>
+    <string name="time"/>
+    <string name="speed"/>
+    <string name="altitude"/>
+    <string name="distance"/>
+    <string name="descent"/>
+    <string name="ascent"/>
+    <string name="topSpeed"/>
     <string name="button_reset_trip">Reset Trip</string>
     <string name="button_exit_app">Exit</string>
     <string name="activity_unknown">Unknown Activity</string>
+    <string name="reset_trip">Reset Trip</string>
+    <string name="exit">Exit</string>
+    <string name="pause_resume">Pause/Resume</string>
 
 </resources>
