@@ -1,16 +1,19 @@
 package org.avmedia.simplenavigator
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -54,7 +57,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         setupButtons()
-        setupNewLocationHandler ()
+        setupNewLocationHandler()
 
         createLocationRequest()
 
@@ -64,7 +67,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    fun setupNewLocationHandler () {
+    fun setupNewLocationHandler() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
@@ -99,11 +102,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
-    fun setupButtons () {
-        val resetButton: Button = findViewById(R.id.resetTripButton)
-        resetButton.setOnClickListener {
+    fun showYesNoTripResetDialog(view: View?) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Trip Reset")
+        builder.setMessage("Are you sure you like to reset the data for the current trip?")
+        builder.setPositiveButton("Yes") { dialog, which ->
             trip.reset()
             displayTrip()
+            Toast.makeText(applicationContext, "Trip data reset", Toast.LENGTH_SHORT).show()
+        }
+        builder.setNegativeButton("No") { dialog, which ->
+        }
+
+        builder.show()
+    }
+
+    fun showYesNoExitDialog(view: View?) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Exiting App")
+        builder.setMessage("Are you sure you like to exit? Trip data will be lost")
+        builder.setPositiveButton("Yes") { dialog, which ->
+            this.finish()
+        }
+        builder.setNegativeButton("No") { dialog, which ->
+        }
+
+        builder.show()
+    }
+
+    fun setupButtons() {
+        val resetButton: Button = findViewById(R.id.resetTripButton)
+        resetButton.setOnClickListener {
+            showYesNoTripResetDialog(null)
         }
 
         val pauseResumeButton: ImageButton = findViewById(R.id.pauseResumeButton)
@@ -112,20 +142,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
             if (trip.isPaused) {
                 pauseResumeButton.setImageResource(R.drawable.ic_play_arrow_24px)
+                Toast.makeText(applicationContext, "Trip paused", Toast.LENGTH_SHORT).show()
             } else {
                 pauseResumeButton.setImageResource(R.drawable.ic_pause_circle_outline_24px)
+                Toast.makeText(applicationContext, "Trip resumed", Toast.LENGTH_SHORT).show()
             }
         }
 
         val exitButton: Button = findViewById(R.id.exitButton)
         exitButton.setOnClickListener {
-            this.finish()
+            showYesNoExitDialog(null)
         }
     }
 
     fun displayTrip() {
         val distanceView: TextView = findViewById(R.id.distance) as TextView
-        distanceView.setText(unitConverter.formatKm(trip.distance/1000, "Distance:"))
+        distanceView.setText(unitConverter.formatKm(trip.distance / 1000, "Distance:"))
 
         val topSpeed: TextView = findViewById(R.id.topSpeed) as TextView
         topSpeed.setText(unitConverter.formatSpeed(trip.topSpeed, "Top Speed:"))

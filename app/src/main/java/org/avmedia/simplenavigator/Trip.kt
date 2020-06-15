@@ -4,13 +4,13 @@ import android.location.Location
 import android.util.Log
 import kotlin.math.absoluteValue
 
-data class Trip(var currentLocation: Location = Location("dummyprovider")) {
+data class Trip(var lastLocation: Location = Location("dummyprovider")) {
     var distance: Float = 0f
     var topSpeed: Float = 0f
     var descent: Double = 0.0
     var ascent: Double = 0.0
     var isPaused: Boolean = false
-    var currentLocationVertical: Location = Location("dummyprovider")
+    var lastLocationVertical: Location = Location("dummyprovider")
 
     fun reset() {
         distance = 0f
@@ -37,22 +37,23 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
     }
 
     fun set(newLocation: Location) {
-        if (currentLocation.altitude == 0.0 || isPaused) {
-            currentLocation = newLocation
-            currentLocationVertical = newLocation
+        if (lastLocation.altitude == 0.0 || isPaused) {
+            lastLocation = newLocation
+            lastLocationVertical = newLocation
             return
         }
 
-        val distanceDelta = newLocation.distanceTo(currentLocation)
+        val distanceDelta = newLocation.distanceTo(lastLocation)
         if (distanceDelta > newLocation.getAccuracy()) {
             distance += distanceDelta
+            lastLocation = newLocation // only set current location if used
         }
 
         if ((newLocation.speed * 3600 / 1000) > topSpeed) {
             topSpeed = newLocation.speed * 3600 / 1000
         }
 
-        val altitudeDelta:Double = newLocation.altitude - currentLocationVertical.altitude
+        val altitudeDelta:Double = newLocation.altitude - lastLocationVertical.altitude
         Log.d("Trip", "altitudeDelta: " + altitudeDelta)
 
         if (!newLocation.hasAccuracy () || altitudeDelta.absoluteValue > newLocation.verticalAccuracyMeters) {
@@ -64,7 +65,7 @@ data class Trip(var currentLocation: Location = Location("dummyprovider")) {
                 descent += altitudeDelta.absoluteValue
             }
 
-            currentLocationVertical = newLocation
+            lastLocationVertical = newLocation
         }
 
         // do not set currentLocationVertical if not used

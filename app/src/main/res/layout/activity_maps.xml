@@ -49,9 +49,12 @@
             android:layout_above="@id/relativeLayoutTrip"
             android:layout_alignParentLeft="true"
             android:background="@drawable/button_background"
+            android:foreground="?attr/selectableItemBackground"
             android:drawableLeft="@drawable/ic_refresh_24px"
             android:padding="10dp"
             android:text="Reset Trip"
+            android:textColor="@color/colorWhite"
+            android:clickable="true"
             android:textSize="16dp" />
 
         <ImageButton
@@ -61,7 +64,9 @@
             android:layout_above="@id/relativeLayoutTrip"
             android:layout_toRightOf="@id/resetTripButton"
             android:background="@drawable/button_background"
+            android:foreground="?attr/selectableItemBackground"
             android:padding="10dp"
+            android:tint="@color/colorWhite"
             android:src="@drawable/ic_pause_circle_outline_24px" />
 
         <Button
@@ -72,9 +77,11 @@
             android:layout_centerInParent="true"
             android:layout_gravity="center_vertical"
             android:background="@drawable/button_background"
+            android:foreground="?attr/selectableItemBackground"
             android:drawableLeft="@drawable/ic_exit_to_app_24px"
             android:padding="10dp"
             android:text="Exit"
+            android:textColor="@color/colorWhite"
             android:textSize="16dp" />
 
         <RelativeLayout
