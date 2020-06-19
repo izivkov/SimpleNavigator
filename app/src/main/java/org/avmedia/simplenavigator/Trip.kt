@@ -1,8 +1,6 @@
 package org.avmedia.simplenavigator
 
 import android.location.Location
-import android.util.Log
-import java.lang.reflect.Type
 import kotlin.math.absoluteValue
 
 data class Trip(var lastLocation: Location = Location("dummyprovider")) {
@@ -11,8 +9,8 @@ data class Trip(var lastLocation: Location = Location("dummyprovider")) {
     var descent: Double = 0.0
     var ascent: Double = 0.0
     var isPaused: Boolean = false
-    val MIN_DISTANCE_ACCURACY:Float = 100f
-    val MIN_ALTITUDE_ACCURACY:Float = 2f
+    val MIN_DISTANCE_ACCURACY:Float = 50f
+    val MIN_ALTITUDE_ACCURACY:Float = 5f
     var lastLocationAltitude: Location = Location("dummyprovider")
 
     fun reset() {
@@ -40,8 +38,6 @@ data class Trip(var lastLocation: Location = Location("dummyprovider")) {
     }
 
     fun set(newLocation: Location) {
-
-        Log.d("Trip", "lastLocationAltitude: " + lastLocationAltitude.toString())
 
         if (lastLocation.altitude == 0.0 || isPaused) {
             lastLocation = newLocation

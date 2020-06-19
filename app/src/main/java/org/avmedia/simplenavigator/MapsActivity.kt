@@ -8,13 +8,11 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+import android.util.Log
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -141,10 +139,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         pauseResumeButton.setOnClickListener {
             trip.togglePause()
 
+            val anim: Animation = AlphaAnimation(0.6f, 1.0f)
+            anim.setDuration(500) //You can manage the blinking time with this parameter
+
+            anim.setStartOffset(20)
+            anim.setRepeatMode(Animation.REVERSE)
+            anim.setRepeatCount(Animation.INFINITE)
+            val tripPanel: RelativeLayout = findViewById(R.id.relativeLayoutTrip)
+            val starResumeButton: ImageButton = findViewById(R.id.pauseResumeButton)
+
             if (trip.isPaused) {
+                tripPanel.startAnimation(anim)
+                starResumeButton.startAnimation(anim)
                 pauseResumeButton.setImageResource(R.drawable.ic_play_arrow_24px)
                 Toast.makeText(applicationContext, "Trip paused", Toast.LENGTH_SHORT).show()
             } else {
+                tripPanel.animation.cancel()
+                starResumeButton.animation.cancel()
                 pauseResumeButton.setImageResource(R.drawable.ic_pause_circle_outline_24px)
                 Toast.makeText(applicationContext, "Trip resumed", Toast.LENGTH_SHORT).show()
             }
