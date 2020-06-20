@@ -2,6 +2,7 @@ package org.avmedia.simplenavigator
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -24,6 +25,10 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
+import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
+import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
+import org.avmedia.simplenavigator.activityrecognition.TransitionRecognitionUtils
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -42,6 +47,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private var locationUpdateState = false
     private val DEFAULT_ZOOM = 16.0f
     private val trip = Trip()
+    private lateinit var mTransitionRecognition: TransitionRecognition
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,12 +64,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupButtons()
         setupNewLocationHandler()
 
+        ActivityCallback.callback = object : ActivityCallbackAbstract() {
+            override fun update(event: String, newValue: String) {
+                Log.d("ActivityCallback", "Got callback with: " + newValue)
+                var res = R.drawable.ic_directions_blank
+                when (newValue) {
+                    "UNKNOWN" -> res = R.drawable.ic_still
+                    "STILL" -> res = R.drawable.ic_still
+                    "WALKING" -> res = R.drawable.ic_directions_walk_24px
+                    "ON_FOOT" -> res = R.drawable.ic_directions_walk_24px
+                    "RUNNING" -> res = R.drawable.ic_directions_run_24px
+                    "ON_BICYCLE" -> res = R.drawable.ic_directions_bike_24px
+                    "IN_VEHICLE" -> res = R.drawable.ic_directions_car_24px
+                    else -> res = R.drawable.ic_still
+                }
+
+                val activityImage: ImageView = findViewById(R.id.activity_image)
+                activityImage.setImageResource(res)
+            }
+        }
+
         createLocationRequest()
 
-        // val transitions = mutableListOf<ActivityTransition>()
-        // ActivityTransitionRequest(transitions)
-
+        initTransitionRecognition()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    fun initTransitionRecognition() {
+        mTransitionRecognition = TransitionRecognition()
+        mTransitionRecognition.startTracking(this)
+    }
+
+    fun showPreviousTransitions() {
+        val sharedPref = getSharedPreferences(
+            TransitionRecognitionUtils.SHARED_PREFERENCES_FILE_KEY_TRANSITIONS, Context.MODE_PRIVATE
+        )
+
+        var previousTransitions =
+            sharedPref.getString(TransitionRecognitionUtils.SHARED_PREFERENCES_KEY_TRANSITIONS, "")
     }
 
     fun setupNewLocationHandler() {
@@ -80,20 +118,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 val latLong = LatLng(lastLocation.latitude, lastLocation.longitude)
                 placeMarkerOnMap()
 
-                val currentZoom:Float
-                if (map.getCameraPosition().zoom >= 8.0) {
-                    currentZoom = map.getCameraPosition().zoom
+                val currentZoom: Float
+                if (map.cameraPosition.zoom >= 8.0) {
+                    currentZoom = map.cameraPosition.zoom
                 } else {
                     currentZoom = DEFAULT_ZOOM
                 }
 
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, currentZoom))
 
-                val speedView: TextView = findViewById(R.id.speed) as TextView
-                speedView.setText(unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), ""))
+                val speedView: TextView = findViewById<TextView>(R.id.speed)
+                speedView.text = unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
 
-                val altView: TextView = findViewById(R.id.altitude) as TextView
-                altView.setText(unitConverter.formatMeters(lastLocation.altitude, "Altitude:"))
+                val altView: TextView = findViewById<TextView>(R.id.altitude)
+                altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
 
                 trip.set(lastLocation)
                 displayTrip()
@@ -140,11 +178,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             trip.togglePause()
 
             val anim: Animation = AlphaAnimation(0.6f, 1.0f)
-            anim.setDuration(500) //You can manage the blinking time with this parameter
+            anim.duration = 500 //You can manage the blinking time with this parameter
 
-            anim.setStartOffset(20)
-            anim.setRepeatMode(Animation.REVERSE)
-            anim.setRepeatCount(Animation.INFINITE)
+            anim.startOffset = 20
+            anim.repeatMode = Animation.REVERSE
+            anim.repeatCount = Animation.INFINITE
             val tripPanel: RelativeLayout = findViewById(R.id.relativeLayoutTrip)
             val starResumeButton: ImageButton = findViewById(R.id.pauseResumeButton)
 
@@ -168,17 +206,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     fun displayTrip() {
-        val distanceView: TextView = findViewById(R.id.distance) as TextView
-        distanceView.setText(unitConverter.formatKm(trip.distance / 1000, "Distance:"))
+        val distanceView: TextView = findViewById<TextView>(R.id.distance)
+        distanceView.text = unitConverter.formatKm(trip.distance / 1000, "Distance:")
 
-        val topSpeed: TextView = findViewById(R.id.topSpeed) as TextView
-        topSpeed.setText(unitConverter.formatSpeed(trip.topSpeed, "Top Speed:"))
+        val topSpeed: TextView = findViewById<TextView>(R.id.topSpeed)
+        topSpeed.text = unitConverter.formatSpeed(trip.topSpeed, "Top Speed:")
 
-        val ascent: TextView = findViewById(R.id.ascent) as TextView
-        ascent.setText(unitConverter.formatMeters(trip.ascent, "Ascent:"))
+        val ascent: TextView = findViewById<TextView>(R.id.ascent)
+        ascent.text = unitConverter.formatMeters(trip.ascent, "Ascent:")
 
-        val descent: TextView = findViewById(R.id.descent) as TextView
-        descent.setText(unitConverter.formatMeters(trip.descent, "Descent:"))
+        val descent: TextView = findViewById<TextView>(R.id.descent)
+        descent.text = unitConverter.formatMeters(trip.descent, "Descent:")
     }
 
     /**
@@ -196,7 +234,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         map.uiSettings.isZoomControlsEnabled = true
         map.setOnMarkerClickListener(this)
-        map.setTrafficEnabled(true)
+        map.isTrafficEnabled = true
 
         setUpMap()
     }
@@ -216,6 +254,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE
             )
+
             return
         }
 
@@ -262,6 +301,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         super.onPause()
         locationUpdateState = false
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        mTransitionRecognition.stopTracking()
     }
 
     public override fun onResume() {
@@ -269,6 +309,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (!locationUpdateState) {
             startLocationUpdates()
         }
+        showPreviousTransitions()
     }
 
     private fun createLocationRequest() {

@@ -14,5 +14,6 @@
     <string name="reset_trip">Reset Trip</string>
     <string name="exit">Exit</string>
     <string name="pause_resume">Pause/Resume</string>
+    <string name="activity_description">Current Activity</string>
 
 </resources>
