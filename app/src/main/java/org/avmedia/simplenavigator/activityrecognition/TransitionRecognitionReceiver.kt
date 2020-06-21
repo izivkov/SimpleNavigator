@@ -20,13 +20,14 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
         )
 
         // sendEvent("**************** Started")
-        ActivityCallback.event = "IN_VEHICLE"
+        ActivityCallback.event = "STILL"
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
         mContext = context!!
 
         Log.d("TransitionReceiver", "onReceive")
+        ActivityCallback.event = "RUNNING"
 
         if (ActivityTransitionResult.hasResult(intent)) {
             var result = ActivityTransitionResult.extractResult(intent)
@@ -71,27 +72,7 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
                 }
             }
         } else {
-            ActivityCallback.event = "UNKNOWN"
-        }
-    }
-
-    /**
-     * In this example we save in preferences, but is a bad way to do that.
-     * Is an Example, in a real app we have to save in database.
-     */
-    private fun saveTransition(activity: ActivityTransitionEvent) {
-        // Save in Preferences
-        val sharedPref = mContext.getSharedPreferences(
-            TransitionRecognitionUtils.SHARED_PREFERENCES_FILE_KEY_TRANSITIONS, Context.MODE_PRIVATE
-        )
-
-        var previousTransitions =
-            sharedPref.getString(TransitionRecognitionUtils.SHARED_PREFERENCES_KEY_TRANSITIONS, "")
-        with(sharedPref.edit()) {
-            val transitions =
-                previousTransitions + TransitionRecognitionUtils.createTranstionString(activity)
-            putString(TransitionRecognitionUtils.SHARED_PREFERENCES_KEY_TRANSITIONS, transitions)
-            commit()
+            // ActivityCallback.event = "UNKNOWN"
         }
     }
 }

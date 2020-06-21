@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">SimpleNavigator</string>
     <string name="title_activity_maps">SimpleNavigator</string>
-    <string name="time"/>
-    <string name="speed"/>
-    <string name="altitude"/>
-    <string name="distance"/>
-    <string name="descent"/>
-    <string name="ascent"/>
-    <string name="topSpeed"/>
+    <string name="time" />
+    <string name="speed" />
+    <string name="altitude" />
+    <string name="distance" />
+    <string name="descent" />
+    <string name="ascent" />
+    <string name="topSpeed" />
     <string name="button_reset_trip">Reset Trip</string>
     <string name="button_exit_app">Exit</string>
     <string name="activity_unknown">Unknown Activity</string>
@@ -15,5 +15,11 @@
     <string name="exit">Exit</string>
     <string name="pause_resume">Pause/Resume</string>
     <string name="activity_description">Current Activity</string>
+
+    <string name="title_activity_permission_rational">PermissionRationalActivity</string>
+    <string name="no_thanks_activity_permission_rational">No Thanks</string>
+    <string name="continue_activity_permission_rational">Continue</string>
+    <string name="main_message_activity_permission_rational">Track activity changes by letting us read your phone\'s activity transitions.</string>
+    <string name="details_message_activity_permission_rational">This app\'s experience requires access to your phone\'s activity transitions to display changes from walking to standing still.</string>
 
 </resources>

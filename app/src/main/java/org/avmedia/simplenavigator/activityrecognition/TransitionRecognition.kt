@@ -1,9 +1,12 @@
 package org.avmedia.simplenavigator.activityrecognition
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionRequest
@@ -119,16 +122,41 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
         val intent = Intent(mContext, TransitionRecognitionReceiver::class.java)
         mPendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0)
 
-        val task =
-            activityRecognitionClient.requestActivityTransitionUpdates(request, mPendingIntent)
-        task.addOnSuccessListener(
-            object : OnSuccessListener<Void> {
-                override fun onSuccess(p0: Void?) {
-                    Log.d("addOnSuccessListener", "Got: " + p0.toString())
-                }
-            })
+        if (activityRecognitionPermissionApproved()) {
 
-        task.addOnFailureListener(
-            OnFailureListener { })
+            val task =
+                activityRecognitionClient.requestActivityTransitionUpdates(request, mPendingIntent)
+
+            task.addOnSuccessListener(
+                object : OnSuccessListener<Void> {
+                    override fun onSuccess(p0: Void?) {
+                        Log.d(
+                            "++++++++++++++++++++++++++ addOnSuccessListener",
+                            "Got: " + p0.toString()
+                        )
+                    }
+                })
+
+            task.addOnFailureListener(
+                object : OnFailureListener {
+                    override fun onFailure(p0: Exception) {
+                        Log.d(
+                            "------------------------ addOnFailureListener",
+                            "Got: " + p0.toString()
+                        )
+                    }
+                })
+        } else {
+            val startIntent = Intent(mContext, PermissionRationalActivity::class.java)
+            mContext.startActivity(startIntent)
+        }
+    }
+
+    private fun activityRecognitionPermissionApproved(): Boolean {
+
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+            mContext,
+            Manifest.permission.ACTIVITY_RECOGNITION
+        )
     }
 }

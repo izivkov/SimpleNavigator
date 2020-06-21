@@ -6,10 +6,10 @@ import android.location.Geocoder
 import android.location.Location
 import android.util.Log
 import java.io.IOException
-import java.lang.String.*
+import java.lang.String.format
 import java.util.*
 
-class UnitConverter() {
+class UnitConverter {
     private var context: Context? = null
     private var location: Location? = null
     private var unitType: UNIT_TYPE? = null
@@ -24,15 +24,13 @@ class UnitConverter() {
     val KM_TO_MILES = 0.62137121212121f
 
     fun init (context: Context, location: Location) {
-        this.context = context;
+        this.context = context
         this.location = location
         this.unitType = getUnits ()
         isInitialized = true
     }
 
     private fun getCountry(): String {
-        Log.d("UnitConverter", "Calling getCountry")
-
         if (context == null || location == null) {
             return ""
         }
