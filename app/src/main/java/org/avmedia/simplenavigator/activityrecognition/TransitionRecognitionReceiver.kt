@@ -18,16 +18,10 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
             "init",
             "Sending started"
         )
-
-        // sendEvent("**************** Started")
-        ActivityCallback.event = "STILL"
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
         mContext = context!!
-
-        Log.d("TransitionReceiver", "onReceive")
-        ActivityCallback.event = "RUNNING"
 
         if (ActivityTransitionResult.hasResult(intent)) {
             var result = ActivityTransitionResult.extractResult(intent)
@@ -37,7 +31,6 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
             }
         }
     }
-
 
     fun processTransitionResult(result: ActivityTransitionResult) {
         for (event in result.transitionEvents) {
@@ -72,7 +65,7 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
                 }
             }
         } else {
-            // ActivityCallback.event = "UNKNOWN"
+             ActivityCallback.event = "UNKNOWN"
         }
     }
 }

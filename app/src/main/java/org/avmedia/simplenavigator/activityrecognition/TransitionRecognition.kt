@@ -15,6 +15,7 @@ import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import java.util.*
 
+
 class TransitionRecognition : TransitionRecognitionAbstract() {
     private val TAG = TransitionRecognition::class.java.simpleName
     lateinit var mContext: Context
@@ -120,7 +121,8 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
         val activityRecognitionClient = ActivityRecognition.getClient(mContext)
 
         val intent = Intent(mContext, TransitionRecognitionReceiver::class.java)
-        mPendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0)
+        mPendingIntent =
+            PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         if (activityRecognitionPermissionApproved()) {
 

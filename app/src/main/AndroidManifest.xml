@@ -50,6 +50,11 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".activityrecognition.TransitionRecognitionReceiver"
+            android:permission="com.google.android.gms.permission.ACTIVITY_RECOGNITION"
+            android:exported="false" />
+
     </application>
 
 </manifest>
