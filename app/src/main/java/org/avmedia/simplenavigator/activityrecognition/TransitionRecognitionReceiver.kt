@@ -3,7 +3,6 @@ package org.avmedia.simplenavigator.activityrecognition
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_ENTER
 import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.ActivityTransitionResult
@@ -14,10 +13,6 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
     lateinit var mContext: Context
 
     init {
-        Log.d(
-            "init",
-            "Sending started"
-        )
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -39,10 +34,6 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
     }
 
     private fun onDetectedTransitionEvent(activity: ActivityTransitionEvent) {
-        Log.d(
-            "onDetectedTransitionEvent",
-            "********************* Activity: " + activity.activityType
-        )
 
         if (activity.transitionType == ACTIVITY_TRANSITION_ENTER) {
             when (activity.activityType) {

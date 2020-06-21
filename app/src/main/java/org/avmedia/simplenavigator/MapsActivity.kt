@@ -1,5 +1,6 @@
 package org.avmedia.simplenavigator
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -29,11 +30,14 @@ import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognitionUtils
+import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+        private const val PERMISSION_REQUEST_ACTIVITY_RECOGNITION = 45
+
         private const val REQUEST_CHECK_SETTINGS = 2
         private var unitConverter = UnitConverter()
     }
@@ -66,10 +70,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         ActivityCallback.callback = object : ActivityCallbackAbstract() {
             override fun update(event: String, newValue: String) {
-                Log.d("ActivityCallback", "Got callback with: " + newValue)
                 var res = R.drawable.ic_directions_blank
                 when (newValue) {
-                    "UNKNOWN" -> res = R.drawable.ic_still
+                    "UNKNOWN" -> res = R.drawable.ic_directions_blank
                     "STILL" -> res = R.drawable.ic_still
                     "WALKING" -> res = R.drawable.ic_directions_walk_24px
                     "ON_FOOT" -> res = R.drawable.ic_directions_walk_24px
@@ -236,14 +239,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         map.setOnMarkerClickListener(this)
         map.isTrafficEnabled = true
 
-        setUpMap()
+        getPermissions()
     }
 
     override fun onMarkerClick(p0: Marker?): Boolean {
         return false
     }
 
-    private fun setUpMap() {
+    private fun getPermissions() {
+
         if (ActivityCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -254,13 +258,46 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE
             )
-
-            return
         }
+    }
 
-        map.isMyLocationEnabled = true
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String?>, grantResults: IntArray
+    ) {
+        val permissionResult = "Request code: " + requestCode + ", Permissions: " +
+                Arrays.toString(permissions) + ", Results: " + Arrays.toString(
+            grantResults
+        )
+        Log.d(
+            "onRequestPermissionsResult",
+            "onRequestPermissionsResult(): $permissionResult"
+        )
+        if (requestCode == PERMISSION_REQUEST_ACTIVITY_RECOGNITION) {
+            Log.d(
+                "onRequestPermissionsResult",
+                "PERMISSION_REQUEST_ACTIVITY_RECOGNITION Permission granted..."
+            )
+        }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            Log.d(
+                "onRequestPermissionsResult",
+                "LOCATION_PERMISSION_REQUEST_CODE Permission granted..."
+            )
 
-        map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(0.0, 0.0)))
+            map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(0.0, 0.0)))
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                )
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this, arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                    PERMISSION_REQUEST_ACTIVITY_RECOGNITION
+                )
+            }
+        }
     }
 
     private fun placeMarkerOnMap() {

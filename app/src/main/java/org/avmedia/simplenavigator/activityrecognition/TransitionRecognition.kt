@@ -15,7 +15,6 @@ import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import java.util.*
 
-
 class TransitionRecognition : TransitionRecognitionAbstract() {
     private val TAG = TransitionRecognition::class.java.simpleName
     lateinit var mContext: Context
@@ -149,8 +148,8 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
                     }
                 })
         } else {
-            val startIntent = Intent(mContext, PermissionRationalActivity::class.java)
-            mContext.startActivity(startIntent)
+//            val startIntent = Intent(mContext, PermissionRationalActivity::class.java)
+//            mContext.startActivity(startIntent)
         }
     }
 

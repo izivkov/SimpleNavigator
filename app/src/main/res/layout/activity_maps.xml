@@ -44,10 +44,11 @@
             android:id="@+id/activity_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/relativeLayoutLiveData"
+            android:layout_toEndOf="@id/relativeLayoutLiveData"
             android:src="@drawable/ic_directions_blank"
-            android:tint="#C70039"
+            android:tint="@color/colorRed"
             android:contentDescription="@string/activity_description"
+            android:background="@drawable/activity_background"
             android:layout_margin="10dp" />
 
         <Button
