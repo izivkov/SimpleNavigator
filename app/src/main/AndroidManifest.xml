@@ -36,11 +36,6 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="org.avmedia.simplenavigator.activityrecognition.PermissionRationalActivity"
-            android:label="@string/title_activity_permission_rational"
-            android:theme="@style/AppTheme.NoActionBar" />
-
-        <activity
             android:name="org.avmedia.simplenavigator.MapsActivity"
             android:label="@string/title_activity_maps"
             android:configChanges="orientation|screenSize|keyboardHidden">

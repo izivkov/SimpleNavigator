@@ -3,14 +3,12 @@ package org.avmedia.simplenavigator
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -29,8 +27,8 @@ import com.google.android.gms.maps.model.Marker
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
-import org.avmedia.simplenavigator.activityrecognition.TransitionRecognitionUtils
 import java.util.*
+import kotlin.math.absoluteValue
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -98,15 +96,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         mTransitionRecognition.startTracking(this)
     }
 
-    fun showPreviousTransitions() {
-        val sharedPref = getSharedPreferences(
-            TransitionRecognitionUtils.SHARED_PREFERENCES_FILE_KEY_TRANSITIONS, Context.MODE_PRIVATE
-        )
-
-        var previousTransitions =
-            sharedPref.getString(TransitionRecognitionUtils.SHARED_PREFERENCES_KEY_TRANSITIONS, "")
-    }
-
     fun setupNewLocationHandler() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
@@ -130,16 +119,47 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, currentZoom))
 
-                val speedView: TextView = findViewById<TextView>(R.id.speed)
-                speedView.text = unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
-
-                val altView: TextView = findViewById<TextView>(R.id.altitude)
-                altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
-
-                trip.set(lastLocation)
-                displayTrip()
+                setSpeedometer()
             }
         }
+    }
+
+    private var lastSpeedLocation: Location = Location("dummyprovider")
+    private var lastAltitudeLocation: Location = Location("dummyprovider")
+
+    private fun setSpeedometer() {
+
+        val speedView: TextView = findViewById<TextView>(R.id.speed)
+        val altView: TextView = findViewById<TextView>(R.id.altitude)
+
+        if (lastSpeedLocation.latitude.equals(0.0)) {
+            speedView.text =
+                unitConverter.formatSpeed(0f, "")
+            lastSpeedLocation = lastLocation
+        }
+
+        val lastSpeed = (lastLocation.speed * 3600 / 1000)
+        val prevSpeed = (lastSpeedLocation.speed * 3600 / 1000)
+
+        if ((lastSpeed - prevSpeed).absoluteValue > lastLocation.speedAccuracyMetersPerSecond) {
+            speedView.text =
+                unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
+
+            lastSpeedLocation = lastLocation
+        }
+
+        if (lastAltitudeLocation.latitude.equals(0.0)) {
+            lastAltitudeLocation = lastLocation
+            altView.text = unitConverter.formatMeters(0.0, "Altitude:")
+        }
+
+        if ((lastLocation.altitude - lastAltitudeLocation.altitude).absoluteValue > lastLocation.verticalAccuracyMeters) {
+            altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
+            lastAltitudeLocation = lastLocation
+        }
+
+        trip.set(lastLocation)
+        displayTrip()
     }
 
     fun showYesNoTripResetDialog() {
@@ -258,6 +278,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE
             )
+        } else {
+            map.isMyLocationEnabled = true
+            map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(0.0, 0.0)))
         }
     }
 
@@ -268,23 +291,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 Arrays.toString(permissions) + ", Results: " + Arrays.toString(
             grantResults
         )
-        Log.d(
-            "onRequestPermissionsResult",
-            "onRequestPermissionsResult(): $permissionResult"
-        )
         if (requestCode == PERMISSION_REQUEST_ACTIVITY_RECOGNITION) {
-            Log.d(
-                "onRequestPermissionsResult",
-                "PERMISSION_REQUEST_ACTIVITY_RECOGNITION Permission granted..."
-            )
         }
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            Log.d(
-                "onRequestPermissionsResult",
-                "LOCATION_PERMISSION_REQUEST_CODE Permission granted..."
-            )
 
-            map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(0.0, 0.0)))
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                map.isMyLocationEnabled = true
+            }
 
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -346,13 +363,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (!locationUpdateState) {
             startLocationUpdates()
         }
-        showPreviousTransitions()
+        mTransitionRecognition.startTracking(this)
     }
 
     private fun createLocationRequest() {
         locationRequest = LocationRequest()
-        locationRequest.interval = 5000
-        locationRequest.fastestInterval = 5000
+        locationRequest.interval = 3000
+        locationRequest.fastestInterval = 3000
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         val builder = LocationSettingsRequest.Builder()

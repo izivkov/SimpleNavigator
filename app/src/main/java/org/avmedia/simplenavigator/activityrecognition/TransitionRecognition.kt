@@ -147,9 +147,6 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
                         )
                     }
                 })
-        } else {
-//            val startIntent = Intent(mContext, PermissionRationalActivity::class.java)
-//            mContext.startActivity(startIntent)
         }
     }
 
