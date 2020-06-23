@@ -4,7 +4,6 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
-import android.util.Log
 import java.io.IOException
 import java.lang.String.format
 import java.util.*
@@ -45,7 +44,6 @@ class UnitConverter {
             }
             return countryCode
         } catch(e: IOException) {
-            Log.d("getCountry", "getFromLocation failed with: " + e.toString())
             return ""
         }
     }

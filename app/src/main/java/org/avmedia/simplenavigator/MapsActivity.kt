@@ -28,7 +28,6 @@ import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
 import java.util.*
-import kotlin.math.absoluteValue
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -50,6 +49,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private val DEFAULT_ZOOM = 16.0f
     private val trip = Trip()
     private lateinit var mTransitionRecognition: TransitionRecognition
+    private val runningQOrLater =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,16 +69,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         ActivityCallback.callback = object : ActivityCallbackAbstract() {
             override fun update(event: String, newValue: String) {
-                var res = R.drawable.ic_directions_blank
+                var res: Int
                 when (newValue) {
-                    "UNKNOWN" -> res = R.drawable.ic_directions_blank
                     "STILL" -> res = R.drawable.ic_still
                     "WALKING" -> res = R.drawable.ic_directions_walk_24px
                     "ON_FOOT" -> res = R.drawable.ic_directions_walk_24px
                     "RUNNING" -> res = R.drawable.ic_directions_run_24px
                     "ON_BICYCLE" -> res = R.drawable.ic_directions_bike_24px
                     "IN_VEHICLE" -> res = R.drawable.ic_directions_car_24px
-                    else -> res = R.drawable.ic_still
+                    else -> res = R.drawable.ic_directions_blank
                 }
 
                 val activityImage: ImageView = findViewById(R.id.activity_image)
@@ -93,7 +93,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     fun initTransitionRecognition() {
         mTransitionRecognition = TransitionRecognition()
-        mTransitionRecognition.startTracking(this)
     }
 
     fun setupNewLocationHandler() {
@@ -124,39 +123,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
-    private var lastSpeedLocation: Location = Location("dummyprovider")
-    private var lastAltitudeLocation: Location = Location("dummyprovider")
-
     private fun setSpeedometer() {
 
         val speedView: TextView = findViewById<TextView>(R.id.speed)
+        speedView.text = unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
+
         val altView: TextView = findViewById<TextView>(R.id.altitude)
-
-        if (lastSpeedLocation.latitude.equals(0.0)) {
-            speedView.text =
-                unitConverter.formatSpeed(0f, "")
-            lastSpeedLocation = lastLocation
-        }
-
-        val lastSpeed = (lastLocation.speed * 3600 / 1000)
-        val prevSpeed = (lastSpeedLocation.speed * 3600 / 1000)
-
-        if ((lastSpeed - prevSpeed).absoluteValue > lastLocation.speedAccuracyMetersPerSecond) {
-            speedView.text =
-                unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
-
-            lastSpeedLocation = lastLocation
-        }
-
-        if (lastAltitudeLocation.latitude.equals(0.0)) {
-            lastAltitudeLocation = lastLocation
-            altView.text = unitConverter.formatMeters(0.0, "Altitude:")
-        }
-
-        if ((lastLocation.altitude - lastAltitudeLocation.altitude).absoluteValue > lastLocation.verticalAccuracyMeters) {
-            altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
-            lastAltitudeLocation = lastLocation
-        }
+        altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
 
         trip.set(lastLocation)
         displayTrip()
@@ -303,16 +276,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 map.isMyLocationEnabled = true
             }
 
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACTIVITY_RECOGNITION
-                )
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this, arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
-                    PERMISSION_REQUEST_ACTIVITY_RECOGNITION
-                )
+            if (runningQOrLater) {
+                if (ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACTIVITY_RECOGNITION
+                    )
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this, arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                        PERMISSION_REQUEST_ACTIVITY_RECOGNITION
+                    )
+                }
             }
         }
     }

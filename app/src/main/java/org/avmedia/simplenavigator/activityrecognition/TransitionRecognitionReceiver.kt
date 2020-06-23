@@ -3,7 +3,6 @@ package org.avmedia.simplenavigator.activityrecognition
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_ENTER
 import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.ActivityTransitionResult
@@ -57,7 +56,6 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
                 }
             }
         } else {
-            Log.d("<<<<<<<<<<<<< onDetectedTransitionEvent", "Exiting activity")
             ActivityCallback.event = "UNKNOWN"
         }
     }

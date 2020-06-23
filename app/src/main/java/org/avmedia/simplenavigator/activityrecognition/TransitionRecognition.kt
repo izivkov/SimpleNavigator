@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityTransition
@@ -32,10 +31,6 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
                     mPendingIntent.cancel()
                 })
                 .addOnFailureListener(OnFailureListener { e ->
-                    Log.e(
-                        TAG,
-                        "Transitions could not be unregistered: $e"
-                    )
                 })
         }
     }
@@ -131,20 +126,12 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
             task.addOnSuccessListener(
                 object : OnSuccessListener<Void> {
                     override fun onSuccess(p0: Void?) {
-                        Log.d(
-                            "++++++++++++++++++++++++++ addOnSuccessListener",
-                            "Got: " + p0.toString()
-                        )
                     }
                 })
 
             task.addOnFailureListener(
                 object : OnFailureListener {
                     override fun onFailure(p0: Exception) {
-                        Log.d(
-                            "------------------------ addOnFailureListener",
-                            "Got: " + p0.toString()
-                        )
                     }
                 })
         }
