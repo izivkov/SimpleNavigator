@@ -3,6 +3,14 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('/home/ivo/projects/SimpleNavigator/keystore/keysore.jks')
+            storePassword 'alexzi123'
+            keyAlias 'key0'
+            keyPassword 'alexzi123'
+        }
+    }
     compileSdkVersion 30
     buildToolsVersion "30.0.0"
 
@@ -10,16 +18,20 @@ android {
         applicationId "org.avmedia.simplenavigator"
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 15
-        versionName "1.5"
+        versionCode 17
+        versionName "1.7"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            resValue "string", "google_maps_api_key", "AIzaSyAbwQMrbx7j_I8Nl-wjXmaFgS7FuSL4vj4"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue "string", "google_maps_api_key", "AIzaSyCoYYayoEgsjYhT8zxHCcbS3nDD4oltLzw"
         }
     }
 }

@@ -15,6 +15,7 @@
     <string name="exit">Exit</string>
     <string name="pause_resume">Pause/Resume</string>
     <string name="activity_description">Current Activity</string>
+    <string name="google_mpps_key">AIzaSyCoYYayoEgsjYhT8zxHCcbS3nDD4oltLzw</string>
 
     <string name="title_activity_permission_rational">PermissionRationalActivity</string>
     <string name="no_thanks_activity_permission_rational">No Thanks</string>
