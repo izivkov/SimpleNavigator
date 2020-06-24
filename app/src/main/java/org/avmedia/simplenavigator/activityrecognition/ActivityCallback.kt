@@ -6,7 +6,7 @@ object ActivityCallback {
 
     lateinit var callback: ActivityCallbackAbstract
 
-    var event: String by observable("UNKNOWN") { _, oldValue, newValue ->
-        callback.update(oldValue, newValue)
+    var activityTransition: String by observable("UNKNOWN") { _, _, newValue ->
+        callback.update(newValue)
     }
 }

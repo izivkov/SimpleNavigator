@@ -68,7 +68,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupNewLocationHandler()
 
         ActivityCallback.callback = object : ActivityCallbackAbstract() {
-            override fun update(oldValue: String, newValue: String) {
+            override fun update(newValue: String) {
                 val res = when (newValue) {
                     "STILL" -> R.drawable.ic_still
                     "WALKING" -> R.drawable.ic_directions_walk_24px

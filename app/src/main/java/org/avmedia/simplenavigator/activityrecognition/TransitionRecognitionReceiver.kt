@@ -38,25 +38,25 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
         if (activity.transitionType == ACTIVITY_TRANSITION_ENTER) {
             when (activity.activityType) {
                 DetectedActivity.STILL ->
-                    ActivityCallback.event = "STILL"
+                    ActivityCallback.activityTransition = "STILL"
                 DetectedActivity.WALKING ->
-                    ActivityCallback.event = "WALKING"
+                    ActivityCallback.activityTransition = "WALKING"
                 DetectedActivity.ON_FOOT ->
-                    ActivityCallback.event = "ON_FOOT"
+                    ActivityCallback.activityTransition = "ON_FOOT"
                 DetectedActivity.RUNNING ->
-                    ActivityCallback.event = "RUNNING"
+                    ActivityCallback.activityTransition = "RUNNING"
                 DetectedActivity.ON_BICYCLE ->
-                    ActivityCallback.event = "ON_BICYCLE"
+                    ActivityCallback.activityTransition = "ON_BICYCLE"
                 DetectedActivity.IN_VEHICLE ->
-                    ActivityCallback.event = "IN_VEHICLE"
+                    ActivityCallback.activityTransition = "IN_VEHICLE"
 
                 // saveTransition(activity)
                 else -> {
-                    ActivityCallback.event = "UNKNOWN"
+                    ActivityCallback.activityTransition = "UNKNOWN"
                 }
             }
         } else {
-            ActivityCallback.event = "UNKNOWN"
+            ActivityCallback.activityTransition = "UNKNOWN"
         }
     }
 }
