@@ -68,16 +68,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupNewLocationHandler()
 
         ActivityCallback.callback = object : ActivityCallbackAbstract() {
-            override fun update(event: String, newValue: String) {
-                var res: Int
-                when (newValue) {
-                    "STILL" -> res = R.drawable.ic_still
-                    "WALKING" -> res = R.drawable.ic_directions_walk_24px
-                    "ON_FOOT" -> res = R.drawable.ic_directions_walk_24px
-                    "RUNNING" -> res = R.drawable.ic_directions_run_24px
-                    "ON_BICYCLE" -> res = R.drawable.ic_directions_bike_24px
-                    "IN_VEHICLE" -> res = R.drawable.ic_directions_car_24px
-                    else -> res = R.drawable.ic_directions_blank
+            override fun update(oldValue: String, newValue: String) {
+                val res = when (newValue) {
+                    "STILL" -> R.drawable.ic_still
+                    "WALKING" -> R.drawable.ic_directions_walk_24px
+                    "ON_FOOT" -> R.drawable.ic_directions_walk_24px
+                    "RUNNING" -> R.drawable.ic_directions_run_24px
+                    "ON_BICYCLE" -> R.drawable.ic_directions_bike_24px
+                    "IN_VEHICLE" -> R.drawable.ic_directions_car_24px
+                    else -> R.drawable.ic_directions_blank
                 }
 
                 val activityImage: ImageView = findViewById(R.id.activity_image)

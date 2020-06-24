@@ -1,5 +1,5 @@
 package org.avmedia.simplenavigator.activityrecognition
 
 abstract class ActivityCallbackAbstract {
-    abstract fun update(event: String, newValue: String)
+    abstract fun update(oldValue: String, newValue: String)
 }

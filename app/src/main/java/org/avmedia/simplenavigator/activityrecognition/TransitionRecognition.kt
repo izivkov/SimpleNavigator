@@ -139,9 +139,13 @@ class TransitionRecognition : TransitionRecognitionAbstract() {
 
     private fun activityRecognitionPermissionApproved(): Boolean {
 
-        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-            mContext,
-            Manifest.permission.ACTIVITY_RECOGNITION
-        )
+        val runningQOrLater =
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
+        return !runningQOrLater ||
+                return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                    mContext,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                )
     }
 }
