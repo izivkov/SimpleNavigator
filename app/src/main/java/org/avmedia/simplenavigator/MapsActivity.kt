@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.Marker
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
+import org.avmedia.simplenavigator.nearby.NearbyConnection
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -34,6 +35,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val PERMISSION_REQUEST_ACTIVITY_RECOGNITION = 45
+
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
 
         private const val REQUEST_CHECK_SETTINGS = 2
         private var unitConverter = UnitConverter()
@@ -87,6 +97,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         createLocationRequest()
 
         initTransitionRecognition()
+        NearbyConnection.init(this)
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -247,7 +259,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         ) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                // arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUIRED_PERMISSIONS,
                 LOCATION_PERMISSION_REQUEST_CODE
             )
         } else {

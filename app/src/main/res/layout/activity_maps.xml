@@ -38,7 +38,37 @@
                 android:text="@string/altitude"
                 android:textColor="@color/colorWhite"
                 android:textSize="20sp" />
+
         </RelativeLayout>
+
+        <Button
+            android:id="@+id/pair"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:layout_alignParentStart="true"
+            android:background="@drawable/button_background"
+            android:foreground="?attr/selectableItemBackground"
+            android:drawableStart="@drawable/ic_group_add_24px"
+            android:drawablePadding="5dp"
+            android:layout_below="@id/relativeLayoutLiveData"
+            android:padding="10dp"
+            android:text="@string/Pair"
+            android:textColor="@color/colorWhite"
+            android:textSize="16sp" />
+
+        <ImageButton
+            android:id="@+id/info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/relativeLayoutLiveData"
+            android:layout_toEndOf="@id/pair"
+            android:background="@drawable/button_background"
+            android:foreground="?attr/selectableItemBackground"
+            android:padding="10dp"
+            android:tint="@color/colorWhite"
+            android:contentDescription="@string/info"
+            android:src="@drawable/ic_info_24px" />
 
         <ImageView
             android:id="@+id/activity_image"

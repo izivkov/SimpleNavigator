@@ -16,6 +16,13 @@
         android:name="android.permission.ACTIVITY_RECOGNITION"
         android:minSdkVersion="29" />
 
+    <!-- Required for Nearby Connections -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -36,6 +43,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_api_key" />
+
+        <meta-data
+            android:name="om.google.android.nearby.messages.API_KEY"
+            android:value="@string/google_nearby_api_key" />
 
         <activity
             android:name="org.avmedia.simplenavigator.MapsActivity"
