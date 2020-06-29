@@ -33,21 +33,14 @@ object NearbyConnection {
                 payload.asBytes()!!,
                 StandardCharsets.UTF_8
             )
-            Log.d("onPayloadReceived", "payload: " + payloadStr)
-
             val otherID = Integer(payloadStr).toInt()
-
             connectionID = "" + (otherID xor myUniqueID)
-            Log.d(
-                "", "**************** Unique SessionID: " + connectionID
-            )
         }
 
         override fun onPayloadTransferUpdate(
             endpointId: String,
             update: PayloadTransferUpdate
         ) {
-            Log.d("onPayloadTransferUpdate", "update: " + update.toString())
         }
     }
 
@@ -141,11 +134,6 @@ object NearbyConnection {
         }
 
     fun shutdownConnection() {
-        Log.d(
-            "shutdownConnection",
-            "Shutting down, connectionsClient: " + connectionsClient.toString()
-        )
-
         if (connectionsClient != null) {
             connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
             connectionsClient!!.stopAllEndpoints()
@@ -163,8 +151,6 @@ object NearbyConnection {
         connectionsClient = Nearby.getConnectionsClient(context)
         connecting = true
         connectionID = ""
-
-        Log.d("connect", "myUniqueID: " + myUniqueID)
 
         startDiscovery()
         startAdvertising()
