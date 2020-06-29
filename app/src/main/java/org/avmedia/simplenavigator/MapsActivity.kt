@@ -231,13 +231,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
         val pairButton: Button = findViewById(R.id.pair)
         pairButton.setOnClickListener {
-            NearbyConnection.connect(this)
+            if (!NearbyConnection.connecting) {
+                NearbyConnection.connect(this)
 
-            val anim: Animation = AlphaAnimation(0.2f, 1.0f)
-            anim.duration = 500 //You can manage the blinking time with this parameter
-            anim.repeatMode = Animation.REVERSE
-            anim.repeatCount = Animation.INFINITE
-            pairButton.startAnimation(anim)
+                val anim: Animation = AlphaAnimation(0.2f, 1.0f)
+                anim.duration = 500 //You can manage the blinking time with this parameter
+                anim.repeatMode = Animation.REVERSE
+                anim.repeatCount = Animation.INFINITE
+                pairButton.startAnimation(anim)
+            } else {
+                NearbyConnection.stopTryingToConnect()
+                if (pairButton != null && pairButton.animation != null) {
+                    pairButton.animation.cancel()
+                }
+            }
         }
     }
 
@@ -396,6 +403,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         locationUpdateState = false
         fusedLocationClient.removeLocationUpdates(locationCallback)
         mTransitionRecognition.stopTracking()
+        NearbyConnection.shutdownConnection()
     }
 
     public override fun onResume() {

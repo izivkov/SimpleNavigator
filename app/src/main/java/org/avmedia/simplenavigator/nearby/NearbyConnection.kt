@@ -17,6 +17,7 @@ object NearbyConnection {
     private var connectionsClient: ConnectionsClient? = null
     private var pairedDeviceEndpointId: String? = null
     private var pairedDeviceName: String? = null
+    var connecting: Boolean = false
 
     // Callbacks for receiving payloads
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
@@ -98,6 +99,8 @@ object NearbyConnection {
                 result: ConnectionResolution
             ) {
                 if (result.status.isSuccess) {
+                    connecting = false
+
                     Log.i(
                         NearbyConnection.TAG,
                         "onConnectionResult: connection successful"
@@ -110,7 +113,8 @@ object NearbyConnection {
 
                     shutdownConnection()
                 } else {
-                    ConnectionCallback.connectionStatus = "FAIL"
+                    abortConnection()
+
                     Log.i(
                         NearbyConnection.TAG,
                         "onConnectionResult: connection failed"
@@ -143,11 +147,17 @@ object NearbyConnection {
         }
     }
 
+    fun stopTryingToConnect() {
+        connectionsClient!!.stopDiscovery()
+        connectionsClient!!.stopAdvertising()
+        abortConnection()
+    }
+
     fun connect(context: Context) {
         this.context = context
         connectionsClient = Nearby.getConnectionsClient(context)
+        connecting = true
 
-        Log.d("************ connect", "connect called")
         getUserName()
 
         startDiscovery()
@@ -180,6 +190,7 @@ object NearbyConnection {
                     "startDiscovery",
                     "We were unable to start startDiscovery. Error: $e"
                 )
+                abortConnection()
             }
     }
 
@@ -199,11 +210,17 @@ object NearbyConnection {
                 Log.d("startAdvertising", "We're advertising")
                 // We're advertising!
             }.addOnFailureListener {
+                abortConnection()
                 Log.d(
                     "startAdvertising",
                     "We were unable to start advertising."
                 )
             }
+    }
+
+    private fun abortConnection() {
+        connecting = false
+        ConnectionCallback.connectionStatus = "FAIL"
     }
 
     /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
