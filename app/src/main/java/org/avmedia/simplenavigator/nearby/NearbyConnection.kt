@@ -6,6 +6,8 @@ import android.view.View
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import java.nio.charset.StandardCharsets
+import java.security.SecureRandom
+import kotlin.math.absoluteValue
 
 
 /** Activity controlling the Rock Paper Scissors game  */
@@ -18,6 +20,8 @@ object NearbyConnection {
     private var pairedDeviceEndpointId: String? = null
     private var pairedDeviceName: String? = null
     var connecting: Boolean = false
+    private var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
+    lateinit var connectionID: String
 
     // Callbacks for receiving payloads
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
@@ -25,11 +29,17 @@ object NearbyConnection {
             endpointId: String,
             payload: Payload
         ) {
+            val payloadStr = String(
+                payload.asBytes()!!,
+                StandardCharsets.UTF_8
+            )
+            Log.d("onPayloadReceived", "payload: " + payloadStr)
+
+            val otherID = Integer(payloadStr).toInt()
+
+            connectionID = "" + (otherID xor myUniqueID)
             Log.d(
-                "onPayloadReceived", "payload: " + String(
-                    payload.asBytes()!!,
-                    StandardCharsets.UTF_8
-                )
+                "", "**************** Unique SessionID: " + connectionID
             )
         }
 
@@ -108,10 +118,10 @@ object NearbyConnection {
                     connectionsClient!!.stopDiscovery()
                     connectionsClient!!.stopAdvertising()
                     pairedDeviceEndpointId = endpointId
-                    sendMessage(getUserName())
+                    sendMessage("" + myUniqueID)
                     ConnectionCallback.connectionStatus = "SUCCESS"
 
-                    shutdownConnection()
+                    // shutdownConnection()
                 } else {
                     abortConnection()
 
@@ -129,11 +139,6 @@ object NearbyConnection {
                 )
             }
         }
-
-    fun getUserName(): String {
-
-        return ""
-    }
 
     fun shutdownConnection() {
         Log.d(
@@ -157,8 +162,9 @@ object NearbyConnection {
         this.context = context
         connectionsClient = Nearby.getConnectionsClient(context)
         connecting = true
+        connectionID = ""
 
-        getUserName()
+        Log.d("connect", "myUniqueID: " + myUniqueID)
 
         startDiscovery()
         startAdvertising()
