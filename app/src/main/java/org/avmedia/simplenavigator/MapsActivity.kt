@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -27,6 +28,8 @@ import com.google.android.gms.maps.model.Marker
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
+import org.avmedia.simplenavigator.nearby.ConnectionCallback
+import org.avmedia.simplenavigator.nearby.ConnectionsCallbackAbstract
 import org.avmedia.simplenavigator.nearby.NearbyConnection
 import java.util.*
 
@@ -94,10 +97,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
 
-        createLocationRequest()
+        ConnectionCallback.callback = object : ConnectionsCallbackAbstract() {
+            override fun update(status: String) {
+                val pairButton: Button = findViewById(R.id.pair)
+                if (pairButton != null && pairButton.animation != null) {
+                    pairButton.animation.cancel()
+                }
+                Toast.makeText(
+                    applicationContext,
+                    "Connection status: " + status,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
+        createLocationRequest()
         initTransitionRecognition()
-        NearbyConnection.init(this)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -210,7 +225,45 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         exitButton.setOnClickListener {
             showYesNoExitDialog()
         }
+        val infoButton: ImageButton = findViewById(R.id.info)
+        infoButton.setOnClickListener {
+            showInfoDialog()
+        }
+        val pairButton: Button = findViewById(R.id.pair)
+        pairButton.setOnClickListener {
+            NearbyConnection.connect(this)
+
+            val anim: Animation = AlphaAnimation(0.2f, 1.0f)
+            anim.duration = 500 //You can manage the blinking time with this parameter
+            anim.repeatMode = Animation.REVERSE
+            anim.repeatCount = Animation.INFINITE
+            pairButton.startAnimation(anim)
+        }
     }
+
+    fun showInfoDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Pairing Devices")
+        val msg =
+            Html.fromHtml(
+                """
+<i>Pairing</i> devices allows you to see each other's location.
+
+<li>Run the app on another device.</li>
+<li>Press the <b>Pair</b> buttons on both devices at the same time.</li>
+<li>The devices will connect to each other.</li>
+</br>
+This is useful for group rides, locating a person in a mall, hiking with a group, etc.
+""", Html.FROM_HTML_MODE_LEGACY
+            )
+
+        builder.setMessage(msg)
+        builder.setPositiveButton("Got It") { dialog, which ->
+        }
+
+        builder.show()
+    }
+
 
     fun displayTrip() {
         val distanceView: TextView = findViewById<TextView>(R.id.distance)

@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:minWidth="0dp"
             android:layout_alignParentStart="true"
-            android:background="@drawable/button_background"
+            android:background="@drawable/button_background_green"
             android:foreground="?attr/selectableItemBackground"
             android:drawableStart="@drawable/ic_group_add_24px"
             android:drawablePadding="5dp"

@@ -7,12 +7,16 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import java.nio.charset.StandardCharsets
 
+
 /** Activity controlling the Rock Paper Scissors game  */
 object NearbyConnection {
+    private lateinit var context: Context
+    private val connectionName = "simpleNavigatorConnection"
+
     // Our handle to Nearby Connections
     private var connectionsClient: ConnectionsClient? = null
-    private var opponentEndpointId: String? = null
-    private var opponentName: String? = null
+    private var pairedDeviceEndpointId: String? = null
+    private var pairedDeviceName: String? = null
 
     // Callbacks for receiving payloads
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
@@ -48,13 +52,30 @@ object NearbyConnection {
                     "onEndpointFound: endpoint found, connecting"
                 )
                 connectionsClient!!.requestConnection(
-                    "connectionName",
+                    connectionName,
                     endpointId,
                     connectionLifecycleCallback
-                )
+                ).addOnSuccessListener {
+                    Log.i(TAG, "OnSuccessListener requestConnection")
+                }
+                    .addOnFailureListener {
+                        Log.i(TAG, "OnFailureListener requestConnection: " + it.toString())
+
+                        connectionsClient!!.stopDiscovery()
+                        connectionsClient!!.stopAdvertising()
+
+                        // retry. this usually helps...
+                        NearbyConnection.connect(context)
+                    }
             }
 
-            override fun onEndpointLost(endpointId: String) {}
+            override fun onEndpointLost(endpointId: String) {
+                Log.i(
+                    NearbyConnection.TAG,
+                    "onEndpointLost: endpoint lost."
+                )
+                ConnectionCallback.connectionStatus = "FAIL"
+            }
         }
 
     // Callbacks for connections to other devices
@@ -69,7 +90,7 @@ object NearbyConnection {
                     "onConnectionInitiated: accepting connection"
                 )
                 connectionsClient!!.acceptConnection(endpointId, payloadCallback)
-                opponentName = connectionInfo.endpointName
+                pairedDeviceName = connectionInfo.endpointName
             }
 
             override fun onConnectionResult(
@@ -83,9 +104,13 @@ object NearbyConnection {
                     )
                     connectionsClient!!.stopDiscovery()
                     connectionsClient!!.stopAdvertising()
-                    opponentEndpointId = endpointId
-                    sendMessage()
+                    pairedDeviceEndpointId = endpointId
+                    sendMessage(getUserName())
+                    ConnectionCallback.connectionStatus = "SUCCESS"
+
+                    shutdownConnection()
                 } else {
+                    ConnectionCallback.connectionStatus = "FAIL"
                     Log.i(
                         NearbyConnection.TAG,
                         "onConnectionResult: connection failed"
@@ -96,13 +121,34 @@ object NearbyConnection {
             override fun onDisconnected(endpointId: String) {
                 Log.i(
                     NearbyConnection.TAG,
-                    "onDisconnected: disconnected from the opponent"
+                    "onDisconnected: disconnected from the pairing device"
                 )
             }
         }
 
-    fun init(context: Context) {
+    fun getUserName(): String {
+
+        return ""
+    }
+
+    fun shutdownConnection() {
+        Log.d(
+            "shutdownConnection",
+            "Shutting down, connectionsClient: " + connectionsClient.toString()
+        )
+
+        if (connectionsClient != null) {
+            connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
+            connectionsClient!!.stopAllEndpoints()
+        }
+    }
+
+    fun connect(context: Context) {
+        this.context = context
         connectionsClient = Nearby.getConnectionsClient(context)
+
+        Log.d("************ connect", "connect called")
+        getUserName()
 
         startDiscovery()
         startAdvertising()
@@ -114,14 +160,14 @@ object NearbyConnection {
 
     /** Disconnects from the opponent and reset the UI.  */
     fun disconnect(view: View?) {
-        connectionsClient!!.disconnectFromEndpoint(opponentEndpointId!!)
+        connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
     }
 
     /** Starts looking for other players using Nearby Connections.  */
     fun startDiscovery(): Unit {
         // Note: Discovery may fail. To keep this demo simple, we don't handle failures.
         connectionsClient!!.startDiscovery(
-            "org.avmedia.simplenavigator", endpointDiscoveryCallback,
+            context.packageName, endpointDiscoveryCallback,
             DiscoveryOptions.Builder()
                 .setStrategy(STRATEGY)
                 .build()
@@ -144,7 +190,7 @@ object NearbyConnection {
 
         // Note: Advertising may fail. To keep this demo simple, we don't handle failures.
         connectionsClient!!.startAdvertising(
-            "codeName", "org.avmedia.simplenavigator", connectionLifecycleCallback,
+            connectionName, context.packageName, connectionLifecycleCallback,
             AdvertisingOptions.Builder()
                 .setStrategy(STRATEGY)
                 .build()
@@ -161,14 +207,14 @@ object NearbyConnection {
     }
 
     /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
-    private fun sendMessage() {
+    private fun sendMessage(message: String) {
         connectionsClient!!.sendPayload(
-            opponentEndpointId!!,
-            Payload.fromBytes(android.os.Build.MODEL.toByteArray(StandardCharsets.UTF_8))
+            pairedDeviceEndpointId!!,
+            Payload.fromBytes(message.toByteArray(StandardCharsets.UTF_8))
         )
     }
 
-    private const val TAG = "RockPaperScissors"
+    private const val TAG = "NearbyConnection"
     private val STRATEGY =
         Strategy.P2P_STAR
 }

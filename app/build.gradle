@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId "org.avmedia.simplenavigator"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 30
         versionCode 19
         versionName "1.9"
