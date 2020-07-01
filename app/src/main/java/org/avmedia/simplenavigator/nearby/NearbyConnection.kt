@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import kotlin.math.absoluteValue
@@ -21,7 +22,7 @@ object NearbyConnection {
     private var pairedDeviceName: String? = null
     var connecting: Boolean = false
     private var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
-    lateinit var connectionID: String
+    var otherId: String = ""
 
     // Callbacks for receiving payloads
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
@@ -33,8 +34,8 @@ object NearbyConnection {
                 payload.asBytes()!!,
                 StandardCharsets.UTF_8
             )
-            val otherID = Integer(payloadStr).toInt()
-            connectionID = "" + (otherID xor myUniqueID)
+            otherId = "" + Integer(payloadStr).toInt()
+            FirebaseConnection.subscribe("" + myUniqueID)
         }
 
         override fun onPayloadTransferUpdate(
@@ -63,13 +64,15 @@ object NearbyConnection {
                     Log.i(TAG, "OnSuccessListener requestConnection")
                 }
                     .addOnFailureListener {
-                        Log.i(TAG, "OnFailureListener requestConnection: " + it.toString())
+                        Log.d(TAG, "OnFailureListener requestConnection: " + it.toString())
 
                         connectionsClient!!.stopDiscovery()
                         connectionsClient!!.stopAdvertising()
 
-                        // retry. this usually helps...
-                        NearbyConnection.connect(context)
+                        if (it.message!!.contains("8012")) {
+                            // retry. this usually helps...
+                            NearbyConnection.connect(context)
+                        }
                     }
             }
 
@@ -111,6 +114,7 @@ object NearbyConnection {
                     connectionsClient!!.stopDiscovery()
                     connectionsClient!!.stopAdvertising()
                     pairedDeviceEndpointId = endpointId
+                    Log.d(TAG, "My ID: ${myUniqueID}")
                     sendMessage("" + myUniqueID)
                     ConnectionCallback.connectionStatus = "SUCCESS"
 
@@ -150,7 +154,7 @@ object NearbyConnection {
         this.context = context
         connectionsClient = Nearby.getConnectionsClient(context)
         connecting = true
-        connectionID = ""
+        otherId = ""
 
         startDiscovery()
         startAdvertising()

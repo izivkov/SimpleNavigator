@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "371844452960",
+    "firebase_url": "https://simplenavigator-98f73.firebaseio.com",
+    "project_id": "simplenavigator-98f73",
+    "storage_bucket": "simplenavigator-98f73.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371844452960:android:d83cd2403a495f5b59e905",
+        "android_client_info": {
+          "package_name": "org.avmedia.simplenavigator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "371844452960-30djqrhbso6vi3ok3ekelk2c4eh274p0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARAIvH8ZE4boUa26c7nl5PM2f8GUnZo0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "371844452960-30djqrhbso6vi3ok3ekelk2c4eh274p0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

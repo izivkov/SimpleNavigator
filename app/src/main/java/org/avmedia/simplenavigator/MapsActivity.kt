@@ -28,6 +28,8 @@ import com.google.android.gms.maps.model.Marker
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
 import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
+import org.avmedia.simplenavigator.firebase.FirebaseConnection
+import org.avmedia.simplenavigator.firebase.ShareLocationMessage
 import org.avmedia.simplenavigator.nearby.ConnectionCallback
 import org.avmedia.simplenavigator.nearby.ConnectionsCallbackAbstract
 import org.avmedia.simplenavigator.nearby.NearbyConnection
@@ -114,6 +116,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         createLocationRequest()
         initTransitionRecognition()
 
+        FirebaseConnection.getToken()
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -145,6 +149,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, currentZoom))
 
                 setSpeedometer()
+
+                FirebaseConnection.send(
+                    ShareLocationMessage(
+                        lastLocation.longitude,
+                        lastLocation.latitude,
+                        "RUNNING"
+                    )
+                )
             }
         }
     }
