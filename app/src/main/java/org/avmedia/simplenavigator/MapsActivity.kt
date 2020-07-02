@@ -25,7 +25,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
@@ -65,9 +64,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
-    var compositeDisposable = CompositeDisposable()
-
-
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,7 +83,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         initTransitionRecognition()
 
         createAppEventsSubscription()
-        PairConnection.onNext(ConnectionProgressEvents.Init)
+        PairConnection.init()
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -96,9 +92,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         PairConnection.connectionEventFlowable
             .doOnNext {
                 when (it) {
-                    ConnectionProgressEvents.Init -> {
-                        PairConnection.init()
-                    }
                     ConnectionProgressEvents.SubscribedToFirebaseFailed -> {
                         Toast.makeText(
                             applicationContext,
@@ -106,6 +99,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             Toast.LENGTH_LONG
                         ).show()
                     }
+
                     ConnectionProgressEvents.SubscribedToFirebaseSuccess -> {
                         Toast.makeText(
                             applicationContext,
@@ -115,8 +109,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     }
 
                     ConnectionProgressEvents.NearbyConnectionSuccess -> {
-                        val pairButton
-                                : Button = findViewById(R.id.pair)
+                        val pairButton: Button = findViewById(R.id.pair)
                         if (pairButton != null && pairButton.animation != null) {
                             pairButton.animation.cancel()
                         }
@@ -128,8 +121,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     }
 
                     ConnectionProgressEvents.NearbyConnectionFailed -> {
-                        val pairButton
-                                : Button = findViewById(R.id.pair)
+                        val pairButton: Button = findViewById(R.id.pair)
                         if (pairButton != null && pairButton.animation != null) {
                             pairButton.animation.cancel()
                         }
@@ -437,7 +429,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         )
     }
 
-    // 1
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {

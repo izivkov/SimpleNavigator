@@ -6,5 +6,6 @@ open class ConnectionProgressEvents(var payload: String? = "") {
     object SubscribedToFirebaseFailed : ConnectionProgressEvents()
     object NearbyConnectionFailed : ConnectionProgressEvents()
     object NearbyConnectionSuccess : ConnectionProgressEvents()
+    object NearbyConnectionDisconnected : ConnectionProgressEvents()
     object ActivityChangeEvent : ConnectionProgressEvents()
 }

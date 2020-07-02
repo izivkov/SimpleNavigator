@@ -129,6 +129,7 @@ object NearbyConnection {
                         NearbyConnection.TAG,
                         "onConnectionResult: connection failed"
                     )
+                    connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionFailed)
                 }
             }
 
@@ -137,6 +138,7 @@ object NearbyConnection {
                     NearbyConnection.TAG,
                     "onDisconnected: disconnected from the pairing device"
                 )
+                connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionDisconnected)
             }
         }
 
@@ -219,7 +221,6 @@ object NearbyConnection {
 
     private fun abortConnection() {
         connecting = false
-        connectionEventProcessor.onNext(ConnectionProgressEvents())
     }
 
     /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
