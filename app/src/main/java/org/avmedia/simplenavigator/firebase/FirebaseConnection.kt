@@ -6,6 +6,9 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import io.reactivex.processors.PublishProcessor
+import org.avmedia.simplenavigator.ConnectionProgressEvents
 import org.avmedia.simplenavigator.nearby.NearbyConnection
 
 object FirebaseConnection {
@@ -14,6 +17,11 @@ object FirebaseConnection {
     val apiId =
         "AAAAVpOoEmA:APA91bHNh7musupADwmDjQgxxzEk2DWIFDj0UWpNnqs2--7nBra__i7sBKavgMdnQ1AlxZnyVAne0q4t_V0vIH5iXJJZq2vGoDGoFKh_ZfGiuv0qw1GpNifDVifQCLYbL6_dfoKkhuG8"
     val messageURL = "https://fcm.googleapis.com/fcm/send"
+    lateinit var connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>
+
+    fun init(connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>) {
+        this.connectionEventProcessor = connectionEventProcessor
+    }
 
     fun getToken() {
         FirebaseInstanceId.getInstance().instanceId
@@ -29,21 +37,34 @@ object FirebaseConnection {
     }
 
     fun subscribe(topic: String) {
-        Log.d(TAG, "*************** subscribing to topic: $topic")
         var subscription = FirebaseMessaging.getInstance().subscribeToTopic(topic)
             .addOnCompleteListener { task ->
-                var msg = "Subscription SUCCESSFUL"
+                var msg = "Subscription FAILED"
                 if (!task.isSuccessful) {
-                    msg = "Subscription FAILED"
+                    connectionEventProcessor.onNext(ConnectionProgressEvents.SubscribedToFirebaseFailed)
+                } else {
+                    msg = "Subscription SUCCESSFUL"
+                    connectionEventProcessor.onNext(ConnectionProgressEvents.SubscribedToFirebaseSuccess)
                 }
-                Log.d(TAG, msg)
             }
     }
 
     data class Msg(
         val data: ShareLocationMessage,
-        val topic: String
+        val topic: String,
+        var webpush: Webpush = Webpush(UrgencyHeader()),
+        var apns: Apns = Apns(PriorityHeader())
     ) {
+        data class UrgencyHeader(var Urgency: String = "high")
+        data class Webpush(var headers: UrgencyHeader)
+
+        data class PriorityHeader(
+            @SerializedName("apns-priority")
+            var priority: String = "10"
+        )
+
+        data class Apns(var headers: PriorityHeader)
+
         val to = "/topics/" + topic
     }
 
@@ -53,20 +74,8 @@ object FirebaseConnection {
             return
         }
 
-        /*
-         {
-          "data": {
-            "longitude": 34.5,
-            "latitude": -73.3,
-            "activity": "STILL"
-          },
-          "to": "/topics/123456"
-        }
-        */
-
         val msg = Msg(shareLocationMsg, NearbyConnection.otherId)
         var bodyJson = Gson().toJson(msg)
-        Log.d(TAG, ">>>>>>>>>>>>>>> sending to topic ${msg.topic}")
 
         val httpAsync = messageURL
             .httpPost()

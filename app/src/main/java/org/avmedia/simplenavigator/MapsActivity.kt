@@ -25,13 +25,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import org.avmedia.simplenavigator.activityrecognition.ActivityCallback
-import org.avmedia.simplenavigator.activityrecognition.ActivityCallbackAbstract
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
-import org.avmedia.simplenavigator.nearby.ConnectionCallback
-import org.avmedia.simplenavigator.nearby.ConnectionsCallbackAbstract
 import org.avmedia.simplenavigator.nearby.NearbyConnection
 import java.util.*
 
@@ -67,6 +65,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
+    var compositeDisposable = CompositeDisposable()
+
+
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,44 +83,80 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupButtons()
         setupNewLocationHandler()
 
-        ActivityCallback.callback = object : ActivityCallbackAbstract() {
-            override fun update(newValue: String) {
-                val res = when (newValue) {
-                    "STILL" -> R.drawable.ic_still
-                    "WALKING" -> R.drawable.ic_directions_walk_24px
-                    "ON_FOOT" -> R.drawable.ic_directions_walk_24px
-                    "RUNNING" -> R.drawable.ic_directions_run_24px
-                    "ON_BICYCLE" -> R.drawable.ic_directions_bike_24px
-                    "IN_VEHICLE" -> R.drawable.ic_directions_car_24px
-                    else -> R.drawable.ic_directions_blank
-                }
-
-                val activityImage: ImageView = findViewById(R.id.activity_image)
-                activityImage.setImageResource(res)
-            }
-        }
-
-        ConnectionCallback.callback = object : ConnectionsCallbackAbstract() {
-            override fun update(status: String) {
-                val pairButton: Button = findViewById(R.id.pair)
-                if (pairButton != null && pairButton.animation != null) {
-                    pairButton.animation.cancel()
-                }
-                Toast.makeText(
-                    applicationContext,
-                    "Connection status: " + status,
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-
         createLocationRequest()
         initTransitionRecognition()
 
-        FirebaseConnection.getToken()
+        createAppEventsSubscription()
+        PairConnection.onNext(ConnectionProgressEvents.Init)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
+
+    private fun createAppEventsSubscription(): Disposable =
+        PairConnection.connectionEventFlowable
+            .doOnNext {
+                when (it) {
+                    ConnectionProgressEvents.Init -> {
+                        PairConnection.init()
+                    }
+                    ConnectionProgressEvents.SubscribedToFirebaseFailed -> {
+                        Toast.makeText(
+                            applicationContext,
+                            "Subscription to Message FAILED",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    ConnectionProgressEvents.SubscribedToFirebaseSuccess -> {
+                        Toast.makeText(
+                            applicationContext,
+                            "Subscription to Message SUCCESSFUL",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    ConnectionProgressEvents.NearbyConnectionSuccess -> {
+                        val pairButton
+                                : Button = findViewById(R.id.pair)
+                        if (pairButton != null && pairButton.animation != null) {
+                            pairButton.animation.cancel()
+                        }
+                        Toast.makeText(
+                            applicationContext,
+                            "Connection status: " + "SUCCESS",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    ConnectionProgressEvents.NearbyConnectionFailed -> {
+                        val pairButton
+                                : Button = findViewById(R.id.pair)
+                        if (pairButton != null && pairButton.animation != null) {
+                            pairButton.animation.cancel()
+                        }
+                        Toast.makeText(
+                            applicationContext,
+                            "Connection status: " + "FAILED",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    ConnectionProgressEvents.ActivityChangeEvent -> {
+                        val res = when (it.payload) {
+                            "STILL" -> R.drawable.ic_still
+                            "WALKING" -> R.drawable.ic_directions_walk_24px
+                            "ON_FOOT" -> R.drawable.ic_directions_walk_24px
+                            "RUNNING" -> R.drawable.ic_directions_run_24px
+                            "ON_BICYCLE" -> R.drawable.ic_directions_bike_24px
+                            "IN_VEHICLE" -> R.drawable.ic_directions_car_24px
+                            else -> R.drawable.ic_directions_blank
+                        }
+
+                        val activityImage: ImageView = findViewById(R.id.activity_image)
+                        activityImage.setImageResource(res)
+                    }
+                }
+            }
+            .subscribe()
 
     fun initTransitionRecognition() {
         mTransitionRecognition = TransitionRecognition()
@@ -244,7 +281,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         val pairButton: Button = findViewById(R.id.pair)
         pairButton.setOnClickListener {
             if (!NearbyConnection.connecting) {
-                NearbyConnection.connect(this)
+                // NearbyConnection.connect(this)
+                PairConnection.nearbyConnect(this)
 
                 val anim: Animation = AlphaAnimation(0.2f, 1.0f)
                 anim.duration = 500 //You can manage the blinking time with this parameter

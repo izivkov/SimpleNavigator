@@ -5,11 +5,12 @@ import android.util.Log
 import android.view.View
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import io.reactivex.processors.PublishProcessor
+import org.avmedia.simplenavigator.ConnectionProgressEvents
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import kotlin.math.absoluteValue
-
 
 /** Activity controlling the Rock Paper Scissors game  */
 object NearbyConnection {
@@ -23,6 +24,12 @@ object NearbyConnection {
     var connecting: Boolean = false
     private var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
     var otherId: String = ""
+
+    lateinit var connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>
+
+    fun init(connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>) {
+        this.connectionEventProcessor = connectionEventProcessor
+    }
 
     // Callbacks for receiving payloads
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
@@ -77,11 +84,7 @@ object NearbyConnection {
             }
 
             override fun onEndpointLost(endpointId: String) {
-                Log.i(
-                    NearbyConnection.TAG,
-                    "onEndpointLost: endpoint lost."
-                )
-                ConnectionCallback.connectionStatus = "FAIL"
+                connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionFailed)
             }
         }
 
@@ -116,7 +119,7 @@ object NearbyConnection {
                     pairedDeviceEndpointId = endpointId
                     Log.d(TAG, "My ID: ${myUniqueID}")
                     sendMessage("" + myUniqueID)
-                    ConnectionCallback.connectionStatus = "SUCCESS"
+                    connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionSuccess)
 
                     // shutdownConnection()
                 } else {
@@ -216,7 +219,7 @@ object NearbyConnection {
 
     private fun abortConnection() {
         connecting = false
-        ConnectionCallback.connectionStatus = "FAIL"
+        connectionEventProcessor.onNext(ConnectionProgressEvents())
     }
 
     /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
