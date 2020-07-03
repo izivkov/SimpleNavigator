@@ -7,8 +7,7 @@ import com.google.android.gms.location.ActivityTransition.ACTIVITY_TRANSITION_EN
 import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.ActivityTransitionResult
 import com.google.android.gms.location.DetectedActivity
-import org.avmedia.simplenavigator.ConnectionProgressEvents
-import org.avmedia.simplenavigator.PairConnection
+import org.avmedia.simplenavigator.EventProcessor
 
 class TransitionRecognitionReceiver : BroadcastReceiver() {
 
@@ -37,44 +36,44 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
 
     private fun onDetectedTransitionEvent(activity: ActivityTransitionEvent) {
 
-        val event: ConnectionProgressEvents =
-            ConnectionProgressEvents.ActivityChangeEvent
+        val event: EventProcessor.ProgressEvents =
+            EventProcessor.ProgressEvents.ActivityChangeEvent
 
         if (activity.transitionType == ACTIVITY_TRANSITION_ENTER) {
             when (activity.activityType) {
                 DetectedActivity.STILL -> {
                     event.payload = "STILL"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 DetectedActivity.WALKING -> {
                     event.payload = "WALKING"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 DetectedActivity.ON_FOOT -> {
                     event.payload = "ON_FOOT"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 DetectedActivity.RUNNING -> {
                     event.payload = "RUNNING"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 DetectedActivity.ON_BICYCLE -> {
                     event.payload = "ON_BICYCLE"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 DetectedActivity.IN_VEHICLE -> {
                     event.payload = "IN_VEHICLE"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
                 // saveTransition(activity)
                 else -> {
                     event.payload = "UNKNOWN"
-                    PairConnection.connectionEventProcessor.onNext(event)
+                    EventProcessor.onNext(event)
                 }
             }
         } else {
             event.payload = "UNKNOWN"
-            PairConnection.connectionEventProcessor.onNext(event)
+            EventProcessor.onNext(event)
         }
     }
 }

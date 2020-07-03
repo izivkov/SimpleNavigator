@@ -7,20 +7,17 @@ import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import io.reactivex.processors.PublishProcessor
-import org.avmedia.simplenavigator.ConnectionProgressEvents
-import org.avmedia.simplenavigator.nearby.NearbyConnection
+import org.avmedia.simplenavigator.EventProcessor
 
 object FirebaseConnection {
+    private var topic: String = ""
     val TAG = "FirebaseConnection"
     var token: String? = ""
     val apiId =
         "AAAAVpOoEmA:APA91bHNh7musupADwmDjQgxxzEk2DWIFDj0UWpNnqs2--7nBra__i7sBKavgMdnQ1AlxZnyVAne0q4t_V0vIH5iXJJZq2vGoDGoFKh_ZfGiuv0qw1GpNifDVifQCLYbL6_dfoKkhuG8"
     val messageURL = "https://fcm.googleapis.com/fcm/send"
-    lateinit var connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>
 
-    fun init(connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>) {
-        this.connectionEventProcessor = connectionEventProcessor
+    fun init() {
     }
 
     fun getToken() {
@@ -41,10 +38,27 @@ object FirebaseConnection {
             .addOnCompleteListener { task ->
                 var msg = "Subscription FAILED"
                 if (!task.isSuccessful) {
-                    connectionEventProcessor.onNext(ConnectionProgressEvents.SubscribedToFirebaseFailed)
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseFailed)
                 } else {
                     msg = "Subscription SUCCESSFUL"
-                    connectionEventProcessor.onNext(ConnectionProgressEvents.SubscribedToFirebaseSuccess)
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseSuccess)
+                }
+            }
+    }
+
+    fun unsubscribe(topic: String) {
+        this.topic = topic
+
+        var subscription = FirebaseMessaging.getInstance().unsubscribeFromTopic(topic)
+            .addOnCompleteListener { task ->
+                var msg = "Un-Subscription FAILED"
+                if (!task.isSuccessful) {
+                    Log.d("unsubscribe", "Failed")
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.UnSubscribedToFirebaseFailed)
+                } else {
+                    Log.d("unsubscribe", "Sucess")
+                    msg = "Un-Subscription SUCCESSFUL"
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.UnSubscribedToFirebaseSuccess)
                 }
             }
     }
@@ -70,11 +84,7 @@ object FirebaseConnection {
 
     fun send(shareLocationMsg: ShareLocationMessage) {
 
-        if ("".equals(NearbyConnection.otherId)) {
-            return
-        }
-
-        val msg = Msg(shareLocationMsg, NearbyConnection.otherId)
+        val msg = Msg(shareLocationMsg, topic)
         var bodyJson = Gson().toJson(msg)
 
         val httpAsync = messageURL

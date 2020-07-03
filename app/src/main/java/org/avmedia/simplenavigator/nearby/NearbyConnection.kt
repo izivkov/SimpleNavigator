@@ -2,12 +2,9 @@ package org.avmedia.simplenavigator.nearby
 
 import android.content.Context
 import android.util.Log
-import android.view.View
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
-import io.reactivex.processors.PublishProcessor
-import org.avmedia.simplenavigator.ConnectionProgressEvents
-import org.avmedia.simplenavigator.firebase.FirebaseConnection
+import org.avmedia.simplenavigator.EventProcessor
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import kotlin.math.absoluteValue
@@ -21,14 +18,9 @@ object NearbyConnection {
     private var connectionsClient: ConnectionsClient? = null
     private var pairedDeviceEndpointId: String? = null
     private var pairedDeviceName: String? = null
-    var connecting: Boolean = false
     private var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
-    var otherId: String = ""
 
-    lateinit var connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>
-
-    fun init(connectionEventProcessor: PublishProcessor<ConnectionProgressEvents>) {
-        this.connectionEventProcessor = connectionEventProcessor
+    fun init() {
     }
 
     // Callbacks for receiving payloads
@@ -41,8 +33,13 @@ object NearbyConnection {
                 payload.asBytes()!!,
                 StandardCharsets.UTF_8
             )
-            otherId = "" + Integer(payloadStr).toInt()
-            FirebaseConnection.subscribe("" + myUniqueID)
+            val topic = "" + Integer(payloadStr).toInt()
+
+            val event: EventProcessor.ProgressEvents =
+                EventProcessor.ProgressEvents.NearbyConnectionPayload
+
+            event.payload = topic
+            EventProcessor.onNext(event)
         }
 
         override fun onPayloadTransferUpdate(
@@ -73,18 +70,37 @@ object NearbyConnection {
                     .addOnFailureListener {
                         Log.d(TAG, "OnFailureListener requestConnection: " + it.toString())
 
-                        connectionsClient!!.stopDiscovery()
-                        connectionsClient!!.stopAdvertising()
-
-                        if (it.message!!.contains("8012")) {
+                        if (it.message!!.contains("8012: STATUS_ENDPOINT_IO_ERROR")) {
                             // retry. this usually helps...
+                            Log.d("NearbyConnection", "Got 8012. Reconnecting...")
+
+                            connectionsClient!!.stopDiscovery()
+                            connectionsClient!!.stopAdvertising()
+
+                            NearbyConnection.connect(context)
+                        }
+
+                        if (it.message!!.contains("8002: STATUS_ALREADY_DISCOVERING")) {
+                            Log.d("NearbyConnection", "Got 8002: STATUS_ALREADY_DISCOVERING")
+                            connectionsClient!!.stopDiscovery()
+                        }
+
+                        if (it.message!!.contains("8003: STATUS_ALREADY_CONNECTED_TO_ENDPOINT")) {
+                            Log.d("NearbyConnection", "Got 8003. Do nothing...")
+                        }
+
+                        if (it.message!!.contains("8007: STATUS_BLUETOOTH_ERROR")) {
+                            Log.d("NearbyConnection", "Got 8007. Reconnecting...")
+                            connectionsClient!!.stopDiscovery()
+                            connectionsClient!!.stopAdvertising()
+
                             NearbyConnection.connect(context)
                         }
                     }
             }
 
             override fun onEndpointLost(endpointId: String) {
-                connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionFailed)
+                EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionFailed)
             }
         }
 
@@ -108,8 +124,6 @@ object NearbyConnection {
                 result: ConnectionResolution
             ) {
                 if (result.status.isSuccess) {
-                    connecting = false
-
                     Log.i(
                         NearbyConnection.TAG,
                         "onConnectionResult: connection successful"
@@ -117,11 +131,9 @@ object NearbyConnection {
                     connectionsClient!!.stopDiscovery()
                     connectionsClient!!.stopAdvertising()
                     pairedDeviceEndpointId = endpointId
-                    Log.d(TAG, "My ID: ${myUniqueID}")
                     sendMessage("" + myUniqueID)
-                    connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionSuccess)
 
-                    // shutdownConnection()
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionSuccess)
                 } else {
                     abortConnection()
 
@@ -129,7 +141,7 @@ object NearbyConnection {
                         NearbyConnection.TAG,
                         "onConnectionResult: connection failed"
                     )
-                    connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionFailed)
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionFailed)
                 }
             }
 
@@ -138,40 +150,25 @@ object NearbyConnection {
                     NearbyConnection.TAG,
                     "onDisconnected: disconnected from the pairing device"
                 )
-                connectionEventProcessor.onNext(ConnectionProgressEvents.NearbyConnectionDisconnected)
+                EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionDisconnected)
             }
         }
-
-    fun shutdownConnection() {
-        if (connectionsClient != null) {
-            connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
-            connectionsClient!!.stopAllEndpoints()
-        }
-    }
-
-    fun stopTryingToConnect() {
-        connectionsClient!!.stopDiscovery()
-        connectionsClient!!.stopAdvertising()
-        abortConnection()
-    }
 
     fun connect(context: Context) {
         this.context = context
         connectionsClient = Nearby.getConnectionsClient(context)
-        connecting = true
-        otherId = ""
 
-        startDiscovery()
         startAdvertising()
-    }
-
-    fun onStop() {
-        connectionsClient!!.stopAllEndpoints()
+        startDiscovery()
     }
 
     /** Disconnects from the opponent and reset the UI.  */
-    fun disconnect(view: View?) {
+    fun disconnect() {
+        connectionsClient!!.stopDiscovery()
+        connectionsClient!!.stopAdvertising()
+
         connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
+        connectionsClient!!.stopAllEndpoints()
     }
 
     /** Starts looking for other players using Nearby Connections.  */
@@ -220,7 +217,6 @@ object NearbyConnection {
     }
 
     private fun abortConnection() {
-        connecting = false
     }
 
     /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
@@ -233,5 +229,5 @@ object NearbyConnection {
 
     private const val TAG = "NearbyConnection"
     private val STRATEGY =
-        Strategy.P2P_STAR
+        Strategy.P2P_CLUSTER
 }

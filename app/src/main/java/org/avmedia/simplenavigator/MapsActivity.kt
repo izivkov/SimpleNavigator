@@ -10,6 +10,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -26,10 +27,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import io.reactivex.disposables.Disposable
+import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
-import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
-import org.avmedia.simplenavigator.nearby.NearbyConnection
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -37,8 +37,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val PERMISSION_REQUEST_ACTIVITY_RECOGNITION = 45
+        private const val PERMISSION_REQUEST_CONTACTS = 20
 
         private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.GET_ACCOUNTS,
+            Manifest.permission.READ_CONTACTS,
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.ACCESS_WIFI_STATE,
@@ -63,6 +66,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var mTransitionRecognition: TransitionRecognition
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
+    var currentActivity: String = "UNKNOWN"
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,10 +94,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun createAppEventsSubscription(): Disposable =
-        PairConnection.connectionEventFlowable
+        EventProcessor.connectionEventFlowable
             .doOnNext {
                 when (it) {
-                    ConnectionProgressEvents.SubscribedToFirebaseFailed -> {
+                    SubscribedToFirebaseFailed -> {
+                        val pairButton: Button = findViewById(R.id.pair)
+                        pairButton.animation?.cancel()
+
                         Toast.makeText(
                             applicationContext,
                             "Subscription to Message FAILED",
@@ -100,7 +108,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         ).show()
                     }
 
-                    ConnectionProgressEvents.SubscribedToFirebaseSuccess -> {
+                    SubscribedToFirebaseSuccess -> {
+                        val pairButton: Button = findViewById(R.id.pair)
+                        pairButton.animation?.cancel()
+                        pairButton.setBackgroundResource(R.drawable.button_background_red)
+                        pairButton.setText(R.string.Unpair)
+
                         Toast.makeText(
                             applicationContext,
                             "Subscription to Message SUCCESSFUL",
@@ -108,11 +121,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         ).show()
                     }
 
-                    ConnectionProgressEvents.NearbyConnectionSuccess -> {
-                        val pairButton: Button = findViewById(R.id.pair)
-                        if (pairButton != null && pairButton.animation != null) {
-                            pairButton.animation.cancel()
-                        }
+                    ActivityChangeEvent -> {
+                        currentActivity = it.payload
+                    }
+
+                    NearbyConnectionSuccess -> {
                         Toast.makeText(
                             applicationContext,
                             "Connection status: " + "SUCCESS",
@@ -120,10 +133,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         ).show()
                     }
 
-                    ConnectionProgressEvents.NearbyConnectionFailed -> {
+                    CloseAllConnection -> {
+                        Toast.makeText(
+                            applicationContext,
+                            "Un-paired",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        val pairButton: Button = findViewById(R.id.pair)
+
+                        pairButton.background = getDrawable(R.drawable.button_background_green)
+                        pairButton.setText(R.string.Pair)
+                        pairButton.animation?.cancel()
+                    }
+
+                    NearbyConnectionFailed -> {
                         val pairButton: Button = findViewById(R.id.pair)
                         if (pairButton != null && pairButton.animation != null) {
-                            pairButton.animation.cancel()
+                            pairButton.animation?.cancel()
                         }
                         Toast.makeText(
                             applicationContext,
@@ -132,7 +158,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         ).show()
                     }
 
-                    ConnectionProgressEvents.ActivityChangeEvent -> {
+                    ActivityChangeEvent -> {
                         val res = when (it.payload) {
                             "STILL" -> R.drawable.ic_still
                             "WALKING" -> R.drawable.ic_directions_walk_24px
@@ -179,13 +205,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                 setSpeedometer()
 
-                FirebaseConnection.send(
-                    ShareLocationMessage(
-                        lastLocation.longitude,
-                        lastLocation.latitude,
-                        "RUNNING"
+                if (PairConnection.connectionStatus == PairConnection.ConnectionStatus.SUBSCRIBED_TO_TOPIC) {
+                    PairConnection.send(
+                        ShareLocationMessage(
+                            lastLocation.longitude,
+                            lastLocation.latitude,
+                            currentActivity,
+                            User.getUser(applicationContext)
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -272,19 +301,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
         val pairButton: Button = findViewById(R.id.pair)
         pairButton.setOnClickListener {
-            if (!NearbyConnection.connecting) {
-                // NearbyConnection.connect(this)
-                PairConnection.nearbyConnect(this)
 
-                val anim: Animation = AlphaAnimation(0.2f, 1.0f)
-                anim.duration = 500 //You can manage the blinking time with this parameter
-                anim.repeatMode = Animation.REVERSE
-                anim.repeatCount = Animation.INFINITE
-                pairButton.startAnimation(anim)
-            } else {
-                NearbyConnection.stopTryingToConnect()
-                if (pairButton != null && pairButton.animation != null) {
-                    pairButton.animation.cancel()
+            when (PairConnection.connectionStatus) {
+                PairConnection.ConnectionStatus.DISCONNECTED -> {
+                    PairConnection.nearbyConnect(this)
+
+                    val anim: Animation = AlphaAnimation(0.2f, 1.0f)
+                    anim.duration = 500 //You can manage the blinking time with this parameter
+                    anim.repeatMode = Animation.REVERSE
+                    anim.repeatCount = Animation.INFINITE
+                    pairButton.startAnimation(anim)
+                }
+
+                in (PairConnection.ConnectionStatus.NEARBY_CONNECTED..PairConnection.ConnectionStatus.GOT_FIRST_PAYLOAD) -> {
+                    PairConnection.disconnect()
+                    pairButton.animation?.cancel()
+                }
+
+                else -> {
+                    pairButton.animation?.cancel()
+                    PairConnection.connectionStatus = PairConnection.ConnectionStatus.DISCONNECTED
                 }
             }
         }
@@ -353,6 +389,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
     }
 
     private fun getPermissions() {
+        // checkContactPermissions ()
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -374,14 +411,15 @@ This is useful for group rides, locating a person in a mall, hiking with a group
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String?>, grantResults: IntArray
     ) {
+        Log.d("onRequestPermissionsResult", "requestCode: ${requestCode}")
+
         val permissionResult = "Request code: " + requestCode + ", Permissions: " +
                 Arrays.toString(permissions) + ", Results: " + Arrays.toString(
             grantResults
         )
         if (requestCode == PERMISSION_REQUEST_ACTIVITY_RECOGNITION) {
         }
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-
+        if (requestCode == PERMISSION_REQUEST_CONTACTS) {
             if (ActivityCompat.checkSelfPermission(
                     this,
                     android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -402,6 +440,20 @@ This is useful for group rides, locating a person in a mall, hiking with a group
                         PERMISSION_REQUEST_ACTIVITY_RECOGNITION
                     )
                 }
+            }
+        }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.READ_CONTACTS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    REQUIRED_PERMISSIONS,
+                    PERMISSION_REQUEST_CONTACTS
+                )
             }
         }
     }
@@ -444,7 +496,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         locationUpdateState = false
         fusedLocationClient.removeLocationUpdates(locationCallback)
         mTransitionRecognition.stopTracking()
-        NearbyConnection.shutdownConnection()
+        //PairConnection.suspendMessages()
     }
 
     public override fun onResume() {
@@ -453,6 +505,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
             startLocationUpdates()
         }
         mTransitionRecognition.startTracking(this)
+        //PairConnection.resumeMessages()
     }
 
     private fun createLocationRequest() {
