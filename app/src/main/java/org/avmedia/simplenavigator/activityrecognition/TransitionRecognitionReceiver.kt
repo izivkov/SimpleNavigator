@@ -65,7 +65,6 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
                     event.payload = "IN_VEHICLE"
                     EventProcessor.onNext(event)
                 }
-                // saveTransition(activity)
                 else -> {
                     event.payload = "UNKNOWN"
                     EventProcessor.onNext(event)

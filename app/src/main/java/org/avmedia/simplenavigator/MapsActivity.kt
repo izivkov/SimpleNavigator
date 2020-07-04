@@ -123,6 +123,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                     ActivityChangeEvent -> {
                         currentActivity = it.payload
+
+                        val res = when (currentActivity) {
+                            "STILL" -> R.drawable.ic_still
+                            "WALKING" -> R.drawable.ic_directions_walk_24px
+                            "ON_FOOT" -> R.drawable.ic_directions_walk_24px
+                            "RUNNING" -> R.drawable.ic_directions_run_24px
+                            "ON_BICYCLE" -> R.drawable.ic_directions_bike_24px
+                            "IN_VEHICLE" -> R.drawable.ic_directions_car_24px
+                            else -> R.drawable.ic_directions_blank
+                        }
+
+                        val activityImage: ImageView = findViewById(R.id.activity_image)
+                        activityImage.setImageResource(res)
                     }
 
                     NearbyConnectionSuccess -> {
@@ -156,21 +169,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             "Connection status: " + "FAILED",
                             Toast.LENGTH_LONG
                         ).show()
-                    }
-
-                    ActivityChangeEvent -> {
-                        val res = when (it.payload) {
-                            "STILL" -> R.drawable.ic_still
-                            "WALKING" -> R.drawable.ic_directions_walk_24px
-                            "ON_FOOT" -> R.drawable.ic_directions_walk_24px
-                            "RUNNING" -> R.drawable.ic_directions_run_24px
-                            "ON_BICYCLE" -> R.drawable.ic_directions_bike_24px
-                            "IN_VEHICLE" -> R.drawable.ic_directions_car_24px
-                            else -> R.drawable.ic_directions_blank
-                        }
-
-                        val activityImage: ImageView = findViewById(R.id.activity_image)
-                        activityImage.setImageResource(res)
                     }
                 }
             }
