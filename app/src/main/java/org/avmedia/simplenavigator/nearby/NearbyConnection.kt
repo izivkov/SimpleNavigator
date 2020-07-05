@@ -37,7 +37,6 @@ object NearbyConnection {
 
             val event: EventProcessor.ProgressEvents =
                 EventProcessor.ProgressEvents.NearbyConnectionPayload
-
             event.payload = topic
             EventProcessor.onNext(event)
         }

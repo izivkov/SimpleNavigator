@@ -32,7 +32,7 @@ object PairConnection {
     }
 
     fun send(shareLocationMsg: ShareLocationMessage) {
-        FirebaseConnection.send(shareLocationMsg)
+        FirebaseConnection.send(currentTopic, shareLocationMsg)
     }
 
     fun nearbyConnect(context: Context) {

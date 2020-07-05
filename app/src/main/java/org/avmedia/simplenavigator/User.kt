@@ -21,7 +21,7 @@ object User {
 
         for (account in list) {
             if (account.type.equals("com.google", ignoreCase = true)) {
-                userName = account.name
+                userName = account.name.split('@')[0]
                 return userName
             }
         }

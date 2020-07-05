@@ -10,7 +10,6 @@ import com.google.gson.annotations.SerializedName
 import org.avmedia.simplenavigator.EventProcessor
 
 object FirebaseConnection {
-    private var topic: String = ""
     val TAG = "FirebaseConnection"
     var token: String? = ""
     val apiId =
@@ -38,8 +37,10 @@ object FirebaseConnection {
             .addOnCompleteListener { task ->
                 var msg = "Subscription FAILED"
                 if (!task.isSuccessful) {
+                    Log.d("subscribe", "Failed to subscribe to topic: ${topic}")
                     EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseFailed)
                 } else {
+                    Log.d("subscribe", "subscribed to topic: ${topic}")
                     msg = "Subscription SUCCESSFUL"
                     EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseSuccess)
                 }
@@ -47,8 +48,6 @@ object FirebaseConnection {
     }
 
     fun unsubscribe(topic: String) {
-        this.topic = topic
-
         var subscription = FirebaseMessaging.getInstance().unsubscribeFromTopic(topic)
             .addOnCompleteListener { task ->
                 var msg = "Un-Subscription FAILED"
@@ -82,10 +81,12 @@ object FirebaseConnection {
         val to = "/topics/" + topic
     }
 
-    fun send(shareLocationMsg: ShareLocationMessage) {
+    fun send(topic: String, shareLocationMsg: ShareLocationMessage) {
 
         val msg = Msg(shareLocationMsg, topic)
         var bodyJson = Gson().toJson(msg)
+
+        Log.d("send", "topic: ${topic}")
 
         val httpAsync = messageURL
             .httpPost()

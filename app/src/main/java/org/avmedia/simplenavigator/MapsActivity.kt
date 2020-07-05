@@ -1,6 +1,7 @@
 package org.avmedia.simplenavigator
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
@@ -26,6 +27,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.gson.Gson
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
@@ -119,6 +121,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             "Subscription to Message SUCCESSFUL",
                             Toast.LENGTH_LONG
                         ).show()
+                    }
+
+                    PairedDeviceLocation -> {
+                        val remoteLocationStr = it.payload
+                        val remoteLocation: ShareLocationMessage =
+                            Gson().fromJson(remoteLocationStr, ShareLocationMessage::class.java)
                     }
 
                     ActivityChangeEvent -> {
@@ -347,7 +355,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         builder.show()
     }
 
-
+    @SuppressLint("SetTextI18n")
     fun displayTrip() {
         val distanceView: TextView = findViewById<TextView>(R.id.distance)
         distanceView.text = unitConverter.formatKm(trip.distance / 1000, "Distance:")
@@ -355,11 +363,17 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         val topSpeed: TextView = findViewById<TextView>(R.id.topSpeed)
         topSpeed.text = unitConverter.formatSpeed(trip.topSpeed, "Top Speed:")
 
-        val ascent: TextView = findViewById<TextView>(R.id.ascent)
-        ascent.text = unitConverter.formatMeters(trip.ascent, "Ascent:")
 
-        val descent: TextView = findViewById<TextView>(R.id.descent)
-        descent.text = unitConverter.formatMeters(trip.descent, "Descent:")
+        val verticalDistanceTravelled: TextView =
+            findViewById<TextView>(R.id.verticalDistanceTravelled)
+
+        val ascentStr = Html.fromHtml(
+            unitConverter.formatMeters(trip.ascent, "<b>↑</b>") + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                    unitConverter.formatMeters(trip.descent, "<b>↓</b>"),
+            Html.FROM_HTML_MODE_LEGACY
+        )
+
+        verticalDistanceTravelled.text = ascentStr
     }
 
     /**
@@ -375,7 +389,8 @@ This is useful for group rides, locating a person in a mall, hiking with a group
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        map.uiSettings.isZoomControlsEnabled = true
+        map.uiSettings.isZoomControlsEnabled = false
+        map.uiSettings.isMyLocationButtonEnabled = false
         map.setOnMarkerClickListener(this)
         map.isTrafficEnabled = true
 

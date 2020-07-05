@@ -28,7 +28,7 @@ object EventProcessor {
         object SubscribedToFirebaseFailed : ProgressEvents()
         object UnSubscribedToFirebaseSuccess : ProgressEvents()
         object UnSubscribedToFirebaseFailed : ProgressEvents()
-
+        object PairedDeviceLocation : ProgressEvents()
         object ActivityChangeEvent : ProgressEvents()
     }
 }

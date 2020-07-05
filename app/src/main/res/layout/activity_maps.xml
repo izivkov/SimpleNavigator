@@ -26,6 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
+                android:layout_marginTop="-10dp"
                 android:text="@string/speed"
                 android:textColor="@color/colorWhite"
                 android:textSize="40sp" />
@@ -46,12 +47,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="0dp"
-            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
             android:background="@drawable/button_background_green"
             android:foreground="?attr/selectableItemBackground"
             android:drawableStart="@drawable/ic_group_add_24px"
             android:drawablePadding="5dp"
-            android:layout_below="@id/relativeLayoutLiveData"
             android:padding="10dp"
             android:text="@string/Pair"
             android:textColor="@color/colorWhite"
@@ -61,8 +61,8 @@
             android:id="@+id/info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/relativeLayoutLiveData"
-            android:layout_toEndOf="@id/pair"
+            android:layout_below="@id/pair"
+            android:layout_alignParentEnd="true"
             android:background="@drawable/button_background"
             android:foreground="?attr/selectableItemBackground"
             android:padding="10dp"
@@ -115,8 +115,7 @@
             android:layout_height="wrap_content"
             android:minWidth="0dp"
             android:layout_alignParentEnd="true"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center_vertical"
+            android:layout_alignParentBottom="true"
             android:background="@drawable/button_background"
             android:foreground="?attr/selectableItemBackground"
             android:drawableTop="@drawable/ic_exit_to_app_24px"
@@ -154,22 +153,12 @@
                 android:textSize="20sp" />
 
             <TextView
-                android:id="@+id/ascent"
+                android:id="@+id/verticalDistanceTravelled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topSpeed"
-                android:layout_gravity="start"
+                android:layout_gravity="center_vertical"
                 android:text="@string/ascent"
-                android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/descent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/ascent"
-                android:layout_gravity="start"
-                android:text="@string/descent"
                 android:textColor="@color/colorWhite"
                 android:textSize="20sp" />
 
