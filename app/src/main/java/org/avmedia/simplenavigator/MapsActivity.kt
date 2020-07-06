@@ -70,6 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     var currentActivity: String = "UNKNOWN"
+    lateinit var remoteMarker: RemoteDeviceMarker
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,6 +128,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         val remoteLocationStr = it.payload
                         val remoteLocation: ShareLocationMessage =
                             Gson().fromJson(remoteLocationStr, ShareLocationMessage::class.java)
+
+                        remoteMarker.update(remoteLocation)
                     }
 
                     ActivityChangeEvent -> {
@@ -180,6 +183,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     }
                 }
             }
+            .doOnError { Log.d("EventProcessor", "got error: $it") }
             .subscribe()
 
     fun initTransitionRecognition() {
@@ -198,7 +202,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 }
 
                 val latLong = LatLng(lastLocation.latitude, lastLocation.longitude)
-                placeMarkerOnMap()
 
                 val currentZoom: Float
                 if (map.cameraPosition.zoom >= 8.0) {
@@ -394,6 +397,8 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         map.setOnMarkerClickListener(this)
         map.isTrafficEnabled = true
 
+        remoteMarker = RemoteDeviceMarker(map, this@MapsActivity)
+
         getPermissions()
     }
 
@@ -469,9 +474,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
                 )
             }
         }
-    }
-
-    private fun placeMarkerOnMap() {
     }
 
     private fun startLocationUpdates() {

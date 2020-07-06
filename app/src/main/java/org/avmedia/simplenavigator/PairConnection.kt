@@ -1,14 +1,18 @@
 package org.avmedia.simplenavigator
 
 import android.content.Context
+import android.util.Log
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
 import org.avmedia.simplenavigator.nearby.NearbyConnection
+import java.security.SecureRandom
+import kotlin.math.absoluteValue
 
 object PairConnection {
 
     var currentTopic: String = ""
+    var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
 
     enum class ConnectionStatus(val state: Int) {
         DISCONNECTED(0), NEARBY_CONNECTING(1), NEARBY_CONNECTED(2), SUBSCRIBING_TO_TOPIC(3), SUBSCRIBED_TO_TOPIC(
@@ -32,7 +36,7 @@ object PairConnection {
     }
 
     fun send(shareLocationMsg: ShareLocationMessage) {
-        FirebaseConnection.send(currentTopic, shareLocationMsg)
+        FirebaseConnection.send("" + myUniqueID, shareLocationMsg)
     }
 
     fun nearbyConnect(context: Context) {
@@ -68,11 +72,22 @@ object PairConnection {
                     EventProcessor.ProgressEvents.NearbyConnecting -> {
                         connectionStatus = ConnectionStatus.NEARBY_CONNECTING
                     }
+
+                    EventProcessor.ProgressEvents.NearbyConnectionSuccess -> {
+                        connectionStatus = ConnectionStatus.NEARBY_CONNECTED
+                    }
+
                     EventProcessor.ProgressEvents.NearbyConnectionPayload -> {
                         currentTopic = "" + it.payload
-                        connectionStatus = ConnectionStatus.NEARBY_CONNECTED
+
                         NearbyConnection.disconnect()
+                        Log.d(
+                            "*************** NearbyConnectionPayload",
+                            "subscribing to topic $currentTopic"
+                        )
+
                         FirebaseConnection.subscribe(currentTopic)
+                        connectionStatus = ConnectionStatus.SUBSCRIBING_TO_TOPIC
                     }
 
                     // Firebase
@@ -82,7 +97,9 @@ object PairConnection {
 
                     // General
                     EventProcessor.ProgressEvents.CloseAllConnection -> {
-                        NearbyConnection.disconnect()
+                        if (connectionStatus in ConnectionStatus.NEARBY_CONNECTED..ConnectionStatus.SUBSCRIBED_TO_TOPIC) {
+                            NearbyConnection.disconnect()
+                        }
                         FirebaseConnection.unsubscribe(currentTopic)
                         connectionStatus = ConnectionStatus.DISCONNECTED
                     }

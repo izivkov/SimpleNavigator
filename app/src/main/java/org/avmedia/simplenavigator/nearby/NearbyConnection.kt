@@ -5,9 +5,8 @@ import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import org.avmedia.simplenavigator.EventProcessor
+import org.avmedia.simplenavigator.PairConnection.myUniqueID
 import java.nio.charset.StandardCharsets
-import java.security.SecureRandom
-import kotlin.math.absoluteValue
 
 /** Activity controlling the Rock Paper Scissors game  */
 object NearbyConnection {
@@ -18,7 +17,6 @@ object NearbyConnection {
     private var connectionsClient: ConnectionsClient? = null
     private var pairedDeviceEndpointId: String? = null
     private var pairedDeviceName: String? = null
-    private var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
 
     fun init() {
     }
@@ -34,6 +32,7 @@ object NearbyConnection {
                 StandardCharsets.UTF_8
             )
             val topic = "" + Integer(payloadStr).toInt()
+            Log.d("payloadCallback", "************ Got topic from remote: $topic")
 
             val event: EventProcessor.ProgressEvents =
                 EventProcessor.ProgressEvents.NearbyConnectionPayload
@@ -65,6 +64,7 @@ object NearbyConnection {
                     connectionLifecycleCallback
                 ).addOnSuccessListener {
                     Log.i(TAG, "OnSuccessListener requestConnection")
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionSuccess)
                 }
                     .addOnFailureListener {
                         Log.d(TAG, "OnFailureListener requestConnection: " + it.toString())
@@ -132,6 +132,11 @@ object NearbyConnection {
                     pairedDeviceEndpointId = endpointId
                     sendMessage("" + myUniqueID)
 
+                    Log.i(
+                        NearbyConnection.TAG,
+                        "myUniqueID: $myUniqueID"
+                    )
+
                     EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionSuccess)
                 } else {
                     abortConnection()
@@ -166,7 +171,9 @@ object NearbyConnection {
         connectionsClient!!.stopDiscovery()
         connectionsClient!!.stopAdvertising()
 
-        connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
+        if (pairedDeviceEndpointId != null) {
+            connectionsClient!!.disconnectFromEndpoint(pairedDeviceEndpointId!!)
+        }
         connectionsClient!!.stopAllEndpoints()
     }
 
