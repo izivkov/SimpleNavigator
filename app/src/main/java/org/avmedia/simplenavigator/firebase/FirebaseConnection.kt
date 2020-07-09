@@ -33,6 +33,7 @@ object FirebaseConnection {
     }
 
     fun subscribe(topic: String) {
+
         var subscription = FirebaseMessaging.getInstance().subscribeToTopic(topic)
             .addOnCompleteListener { task ->
                 var msg = "Subscription FAILED"

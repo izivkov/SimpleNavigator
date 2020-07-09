@@ -5,7 +5,7 @@ import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import org.avmedia.simplenavigator.EventProcessor
-import org.avmedia.simplenavigator.PairConnection.myUniqueID
+import org.avmedia.simplenavigator.PairConnection.myTopic
 import java.nio.charset.StandardCharsets
 
 /** Activity controlling the Rock Paper Scissors game  */
@@ -130,11 +130,11 @@ object NearbyConnection {
                     connectionsClient!!.stopDiscovery()
                     connectionsClient!!.stopAdvertising()
                     pairedDeviceEndpointId = endpointId
-                    sendMessage("" + myUniqueID)
+                    sendMessage("" + myTopic)
 
                     Log.i(
                         NearbyConnection.TAG,
-                        "myUniqueID: $myUniqueID"
+                        "myUniqueID: $myTopic"
                     )
 
                     EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionSuccess)

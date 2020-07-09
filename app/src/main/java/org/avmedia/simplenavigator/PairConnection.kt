@@ -1,7 +1,6 @@
 package org.avmedia.simplenavigator
 
 import android.content.Context
-import android.util.Log
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
@@ -12,7 +11,7 @@ import kotlin.math.absoluteValue
 object PairConnection {
 
     var currentTopic: String = ""
-    var myUniqueID: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
+    var myTopic: Int = SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
 
     enum class ConnectionStatus(val state: Int) {
         DISCONNECTED(0), NEARBY_CONNECTING(1), NEARBY_CONNECTED(2), SUBSCRIBING_TO_TOPIC(3), SUBSCRIBED_TO_TOPIC(
@@ -36,7 +35,7 @@ object PairConnection {
     }
 
     fun send(shareLocationMsg: ShareLocationMessage) {
-        FirebaseConnection.send("" + myUniqueID, shareLocationMsg)
+        FirebaseConnection.send("" + myTopic, shareLocationMsg)
     }
 
     fun nearbyConnect(context: Context) {
@@ -81,10 +80,6 @@ object PairConnection {
                         currentTopic = "" + it.payload
 
                         NearbyConnection.disconnect()
-                        Log.d(
-                            "*************** NearbyConnectionPayload",
-                            "subscribing to topic $currentTopic"
-                        )
 
                         FirebaseConnection.subscribe(currentTopic)
                         connectionStatus = ConnectionStatus.SUBSCRIBING_TO_TOPIC

@@ -4,6 +4,8 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.text.Html
+import android.text.Spanned
 import java.io.IOException
 import java.lang.String.format
 import java.util.*
@@ -57,7 +59,7 @@ class UnitConverter {
         }
     }
 
-    fun formatMeters (meters: Double, label: String): String {
+    fun formatMeters(meters: Double, label: String): String {
         var value: Double = meters
         var unit = "m"
         if (unitType == UNIT_TYPE.IMPERIAL) {
@@ -67,7 +69,24 @@ class UnitConverter {
         return format("%s %.${0}f %s", label, value, unit)
     }
 
-    fun formatSpeed (kmPerHour: Float, label: String): String {
+    fun formatSpeedHtml(kmPerHour: Float, label: String): Spanned {
+        var value: Float = kmPerHour
+        var unit = "km/h"
+        if (unitType == UNIT_TYPE.IMPERIAL) {
+            value *= KM_TO_MILES
+            unit = "mph"
+        }
+        return Html.fromHtml(
+            format(
+                "%s %.${0}f <small><small>%s</small></small>",
+                label,
+                value,
+                unit
+            ), Html.FROM_HTML_MODE_LEGACY
+        )
+    }
+
+    fun formatSpeed(kmPerHour: Float, label: String): String {
         var value: Float = kmPerHour
         var unit = "km/h"
         if (unitType == UNIT_TYPE.IMPERIAL) {

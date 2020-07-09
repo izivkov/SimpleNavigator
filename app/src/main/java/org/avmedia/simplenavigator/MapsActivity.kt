@@ -19,6 +19,7 @@ import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.gson.Gson
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
@@ -231,7 +233,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private fun setSpeedometer() {
 
         val speedView: TextView = findViewById<TextView>(R.id.speed)
-        speedView.text = unitConverter.formatSpeed((lastLocation.speed * 3600 / 1000), "")
+        speedView.text = unitConverter.formatSpeedHtml((lastLocation.speed * 3600 / 1000), "")
 
         val altView: TextView = findViewById<TextView>(R.id.altitude)
         altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
@@ -322,7 +324,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     pairButton.startAnimation(anim)
                 }
 
-                in (PairConnection.ConnectionStatus.NEARBY_CONNECTED..PairConnection.ConnectionStatus.GOT_FIRST_PAYLOAD) -> {
+                in (PairConnection.ConnectionStatus.NEARBY_CONNECTED..PairConnection.ConnectionStatus.SUBSCRIBED_TO_TOPIC) -> {
+                    PairConnection.disconnect()
+                    pairButton.animation?.cancel()
+                }
+
+                PairConnection.ConnectionStatus.GOT_FIRST_PAYLOAD -> {
                     PairConnection.disconnect()
                     pairButton.animation?.cancel()
                 }
@@ -397,6 +404,8 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         map.setOnMarkerClickListener(this)
         map.isTrafficEnabled = true
 
+        val markerOptions = MarkerOptions()
+        val drawable = ContextCompat.getDrawable(this@MapsActivity, R.drawable.ic_navigation_24px)
         remoteMarker = RemoteDeviceMarker(map, this@MapsActivity)
 
         getPermissions()
