@@ -19,6 +19,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     // [START receive_message]
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         // Check if message contains a data payload.
+
+        EventProcessor.onNext(EventProcessor.ProgressEvents.FirebaseMessageReceived)
+
         if (remoteMessage.data.isNotEmpty()) {
             Log.d(TAG, "Message data payload: ${remoteMessage.data}")
             handleNow(remoteMessage.data)

@@ -1,5 +1,6 @@
 package org.avmedia.simplenavigator
 
+import android.util.Log
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 
@@ -10,7 +11,11 @@ object EventProcessor {
     val connectionEventFlowable = EventProcessor.eventProcessor as Flowable<ProgressEvents>
 
     fun onNext(e: ProgressEvents) {
-        return eventProcessor.onNext(e)
+        if (eventProcessor.hasSubscribers()) {
+            return eventProcessor.onNext(e)
+        } else {
+            Log.d("EventProcessor:onNext", "No subscribers")
+        }
     }
 
     open class ProgressEvents(var payload: String = "") {
@@ -24,8 +29,10 @@ object EventProcessor {
         object NearbyConnectionDisconnected : ProgressEvents()
         object NearbyConnectionPayload : ProgressEvents()
 
+        object SubscribingToFirebaseTopic : ProgressEvents()
         object SubscribedToFirebaseSuccess : ProgressEvents()
         object SubscribedToFirebaseFailed : ProgressEvents()
+        object FirebaseMessageReceived : ProgressEvents()
         object UnSubscribedToFirebaseSuccess : ProgressEvents()
         object UnSubscribedToFirebaseFailed : ProgressEvents()
         object PairedDeviceLocation : ProgressEvents()

@@ -32,7 +32,7 @@ object NearbyConnection {
                 StandardCharsets.UTF_8
             )
             val topic = "" + Integer(payloadStr).toInt()
-            Log.d("payloadCallback", "************ Got topic from remote: $topic")
+            Log.d("Nearby", "------------ Got payload: $topic, sending NearbyConnectionPayload")
 
             val event: EventProcessor.ProgressEvents =
                 EventProcessor.ProgressEvents.NearbyConnectionPayload
@@ -44,6 +44,7 @@ object NearbyConnection {
             endpointId: String,
             update: PayloadTransferUpdate
         ) {
+            Log.d("onPayloadTransferUpdate", "endpointId: $endpointId")
         }
     }
 
@@ -152,7 +153,7 @@ object NearbyConnection {
             override fun onDisconnected(endpointId: String) {
                 Log.i(
                     NearbyConnection.TAG,
-                    "onDisconnected: disconnected from the pairing device"
+                    "onDisconnected: disconnected from the nearby device"
                 )
                 EventProcessor.onNext(EventProcessor.ProgressEvents.NearbyConnectionDisconnected)
             }
@@ -225,7 +226,6 @@ object NearbyConnection {
     private fun abortConnection() {
     }
 
-    /** Sends the user's selection of rock, paper, or scissors to the opponent.  */
     private fun sendMessage(message: String) {
         connectionsClient!!.sendPayload(
             pairedDeviceEndpointId!!,
@@ -235,5 +235,5 @@ object NearbyConnection {
 
     private const val TAG = "NearbyConnection"
     private val STRATEGY =
-        Strategy.P2P_CLUSTER
+        Strategy.P2P_POINT_TO_POINT
 }

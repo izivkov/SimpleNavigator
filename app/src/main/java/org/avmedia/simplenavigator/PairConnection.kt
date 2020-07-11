@@ -1,6 +1,8 @@
 package org.avmedia.simplenavigator
 
 import android.content.Context
+import android.util.Log
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
@@ -19,6 +21,13 @@ object PairConnection {
         ),
         GOT_FIRST_PAYLOAD(5)
     }
+
+    var whereToRun = AndroidSchedulers.mainThread()
+    // Schedulers.single()
+    // Schedulers.io()
+    // Schedulers.computation()
+    // Schedulers.newThread()
+    // AndroidSchedulers.mainThread()
 
     var connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED
 
@@ -65,6 +74,7 @@ object PairConnection {
 
     private fun createAppEventsSubscription(): Disposable =
         EventProcessor.connectionEventFlowable
+            .observeOn(whereToRun)
             .doOnNext {
                 when (it) {
                     // Nearby
@@ -100,6 +110,13 @@ object PairConnection {
                     }
                 }
             }
-            .subscribe()
+            .subscribe(
+                {},
+                { throwable ->
+                    Log.d(
+                        "createAppEventsSubscription",
+                        "Got error on subscribe: $throwable"
+                    )
+                })
 
 }

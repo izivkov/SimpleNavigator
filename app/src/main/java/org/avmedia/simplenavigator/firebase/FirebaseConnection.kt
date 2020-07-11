@@ -23,7 +23,6 @@ object FirebaseConnection {
         FirebaseInstanceId.getInstance().instanceId
             .addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w(TAG, "getInstanceId failed", task.exception)
                     return@OnCompleteListener
                 }
 
@@ -33,17 +32,20 @@ object FirebaseConnection {
     }
 
     fun subscribe(topic: String) {
+        EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribingToFirebaseTopic)
 
         var subscription = FirebaseMessaging.getInstance().subscribeToTopic(topic)
             .addOnCompleteListener { task ->
                 var msg = "Subscription FAILED"
-                if (!task.isSuccessful) {
-                    Log.d("subscribe", "Failed to subscribe to topic: ${topic}")
-                    EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseFailed)
-                } else {
-                    Log.d("subscribe", "subscribed to topic: ${topic}")
+                if (task.isSuccessful) {
                     msg = "Subscription SUCCESSFUL"
                     EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseSuccess)
+                    Log.d(
+                        "FirebaseConnection",
+                        "############ sending SubscribedToFirebaseSuccess event"
+                    )
+                } else {
+                    EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseFailed)
                 }
             }
     }

@@ -94,17 +94,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         createAppEventsSubscription()
         PairConnection.init()
+        // TimeoutManager.createTimerSubscription()
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     private fun createAppEventsSubscription(): Disposable =
         EventProcessor.connectionEventFlowable
+            .observeOn(PairConnection.whereToRun)
             .doOnNext {
                 when (it) {
                     SubscribedToFirebaseFailed -> {
-                        val pairButton: Button = findViewById(R.id.pair)
-                        pairButton.animation?.cancel()
+                        resetPairButton()
 
                         Toast.makeText(
                             applicationContext,
@@ -114,6 +115,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     }
 
                     SubscribedToFirebaseSuccess -> {
+
+                        PairConnection.connectionStatus =
+                            PairConnection.ConnectionStatus.SUBSCRIBED_TO_TOPIC
+
                         val pairButton: Button = findViewById(R.id.pair)
                         pairButton.animation?.cancel()
                         pairButton.setBackgroundResource(R.drawable.button_background_red)
@@ -165,28 +170,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             "Un-paired",
                             Toast.LENGTH_LONG
                         ).show()
-                        val pairButton: Button = findViewById(R.id.pair)
-
-                        pairButton.background = getDrawable(R.drawable.button_background_green)
-                        pairButton.setText(R.string.Pair)
-                        pairButton.animation?.cancel()
+                        resetPairButton()
                     }
 
                     NearbyConnectionFailed -> {
                         val pairButton: Button = findViewById(R.id.pair)
-                        if (pairButton != null && pairButton.animation != null) {
-                            pairButton.animation?.cancel()
-                        }
                         Toast.makeText(
                             applicationContext,
                             "Connection status: " + "FAILED",
                             Toast.LENGTH_LONG
                         ).show()
+
+                        resetPairButton()
                     }
                 }
             }
-            .doOnError { Log.d("EventProcessor", "got error: $it") }
-            .subscribe()
+            .subscribe(
+                { },
+                { throwable ->
+                    Log.d(
+                        "createAppEventsSubscription",
+                        "Got error on subscribe: $throwable"
+                    )
+                })
 
     fun initTransitionRecognition() {
         mTransitionRecognition = TransitionRecognition()
@@ -326,20 +332,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                 in (PairConnection.ConnectionStatus.NEARBY_CONNECTED..PairConnection.ConnectionStatus.SUBSCRIBED_TO_TOPIC) -> {
                     PairConnection.disconnect()
-                    pairButton.animation?.cancel()
+                    resetPairButton()
                 }
 
                 PairConnection.ConnectionStatus.GOT_FIRST_PAYLOAD -> {
                     PairConnection.disconnect()
-                    pairButton.animation?.cancel()
+                    resetPairButton()
                 }
 
                 else -> {
-                    pairButton.animation?.cancel()
+                    resetPairButton()
                     PairConnection.connectionStatus = PairConnection.ConnectionStatus.DISCONNECTED
                 }
             }
         }
+    }
+
+    private fun resetPairButton() {
+        val pairButton: Button = findViewById(R.id.pair)
+
+        pairButton.animation?.cancel()
+        pairButton.setBackgroundResource(R.drawable.button_background_green)
+        pairButton.text = "Pair"
     }
 
     fun showInfoDialog() {
@@ -438,8 +452,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String?>, grantResults: IntArray
     ) {
-        Log.d("onRequestPermissionsResult", "requestCode: ${requestCode}")
-
         val permissionResult = "Request code: " + requestCode + ", Permissions: " +
                 Arrays.toString(permissions) + ", Results: " + Arrays.toString(
             grantResults
@@ -520,7 +532,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         locationUpdateState = false
         fusedLocationClient.removeLocationUpdates(locationCallback)
         mTransitionRecognition.stopTracking()
-        //PairConnection.suspendMessages()
     }
 
     public override fun onResume() {
@@ -529,7 +540,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
             startLocationUpdates()
         }
         mTransitionRecognition.startTracking(this)
-        //PairConnection.resumeMessages()
     }
 
     private fun createLocationRequest() {

@@ -3,7 +3,6 @@ package org.avmedia.simplenavigator
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
-import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -44,7 +43,6 @@ data class RemoteDeviceMarker(var map: GoogleMap, var activity: MapsActivity) {
                 "ON_BICYCLE" -> R.drawable.marker_bike
                 "IN_VEHICLE" -> R.drawable.marker_in_vehicle
                 else -> R.drawable.marker_unknown
-
             }
 
             val drawable = ContextCompat.getDrawable(activity, res)
@@ -74,7 +72,6 @@ data class RemoteDeviceMarker(var map: GoogleMap, var activity: MapsActivity) {
     private fun resetTimer() {
         timer?.cancel()
         timer = Timer("Make Invisible", true).schedule(12000) {
-            Log.d("resetTimer", "Making marker invisible")
             activity.runOnUiThread(java.lang.Runnable {
                 marker.isVisible = false
             })
