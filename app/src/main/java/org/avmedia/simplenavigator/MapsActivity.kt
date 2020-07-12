@@ -362,7 +362,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         val msg =
             Html.fromHtml(
                 """
-<i>Pairing</i> devices allows you to see each other's location.
+<i>Pairing</i> devices allows you to see each other's location and current activity.
 
 <li>Run the app on another device.</li>
 <li>Press the <b>Pair</b> buttons on both devices at the same time.</li>

@@ -32,7 +32,6 @@ object NearbyConnection {
                 StandardCharsets.UTF_8
             )
             val topic = "" + Integer(payloadStr).toInt()
-            Log.d("Nearby", "------------ Got payload: $topic, sending NearbyConnectionPayload")
 
             val event: EventProcessor.ProgressEvents =
                 EventProcessor.ProgressEvents.NearbyConnectionPayload
@@ -44,7 +43,6 @@ object NearbyConnection {
             endpointId: String,
             update: PayloadTransferUpdate
         ) {
-            Log.d("onPayloadTransferUpdate", "endpointId: $endpointId")
         }
     }
 
