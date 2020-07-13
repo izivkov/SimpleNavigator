@@ -23,8 +23,8 @@ object PairConnection {
     }
 
     var whereToRun = AndroidSchedulers.mainThread()
-    // Schedulers.single()
     // Schedulers.io()
+    // Schedulers.single()
     // Schedulers.computation()
     // Schedulers.newThread()
     // AndroidSchedulers.mainThread()

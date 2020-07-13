@@ -1,6 +1,7 @@
 package org.avmedia.simplenavigator.firebase
 
 import android.util.Log
+import androidx.annotation.Keep
 import com.github.kittinunf.fuel.httpPost
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
@@ -13,7 +14,11 @@ object FirebaseConnection {
     val TAG = "FirebaseConnection"
     var token: String? = ""
     val apiId =
-        "AAAAVpOoEmA:APA91bHNh7musupADwmDjQgxxzEk2DWIFDj0UWpNnqs2--7nBra__i7sBKavgMdnQ1AlxZnyVAne0q4t_V0vIH5iXJJZq2vGoDGoFKh_ZfGiuv0qw1GpNifDVifQCLYbL6_dfoKkhuG8"
+    // dev
+    // "AAAAVpOoEmA:APA91bHNh7musupADwmDjQgxxzEk2DWIFDj0UWpNnqs2--7nBra__i7sBKavgMdnQ1AlxZnyVAne0q4t_V0vIH5iXJJZq2vGoDGoFKh_ZfGiuv0qw1GpNifDVifQCLYbL6_dfoKkhuG8"
+
+        // release
+        "AAAAVpOoEmA:APA91bEU38i90opHOMjkyyMOVlKhT3mor0e4KCmmWOuHGC_4D1Qkes_ivBgjvngPgqTtuVuPzBmgnCvsdYw9tkm-BGNpcBLQnPiUojl9q7SM71QDIGPqHi3E42jK9UxNjYCOYNMgVXm2"
     val messageURL = "https://fcm.googleapis.com/fcm/send"
 
     fun init() {
@@ -65,6 +70,7 @@ object FirebaseConnection {
             }
     }
 
+    @Keep
     data class Msg(
         val data: ShareLocationMessage,
         val topic: String,
@@ -102,7 +108,12 @@ object FirebaseConnection {
                 )
             )
             .responseString { request, response, result ->
+//                Log.d("send", "***request: $request")
+//                Log.d("send", "***response: $response")
+                Log.d("send", "***result: $result")
+                // in release version getting: Failure: HTTP Exception 400 Bad Request
             }
+
 
         httpAsync.join()
     }

@@ -19,8 +19,8 @@ android {
         applicationId "org.avmedia.simplenavigator"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 202
-        versionName "2.0.2"
+        versionCode 204
+        versionName "2.0.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +33,7 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
             resValue "string", "google_maps_api_key", "AIzaSyCoYYayoEgsjYhT8zxHCcbS3nDD4oltLzw"
             resValue "string", "google_nearby_api_key", "AIzaSyBiZeVIJhrs1Gwrg9qJZ0wSGm4dsLtxGhA"
         }
