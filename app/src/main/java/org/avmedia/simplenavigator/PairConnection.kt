@@ -12,7 +12,8 @@ object PairConnection {
 
     var currentTopic: String = ""
     var myTopic: String =
-        UUID.randomUUID().toString() //SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
+        UUID.randomUUID().toString()
+    // ""+SecureRandom.getInstance("SHA1PRNG").nextInt().absoluteValue
 
     enum class ConnectionStatus(val state: Int) {
         DISCONNECTED(0), NEARBY_CONNECTING(1), NEARBY_CONNECTED(2), SUBSCRIBING_TO_TOPIC(3), SUBSCRIBED_TO_TOPIC(

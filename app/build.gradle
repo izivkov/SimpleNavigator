@@ -19,8 +19,8 @@ android {
         applicationId "org.avmedia.simplenavigator"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 204
-        versionName "2.0.4"
+        versionCode 205
+        versionName "2.0.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

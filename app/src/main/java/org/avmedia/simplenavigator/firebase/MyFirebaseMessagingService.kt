@@ -33,7 +33,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
-
     // [START on_new_token]
     /**
      * Called if InstanceID token is updated. This may occur if the security of

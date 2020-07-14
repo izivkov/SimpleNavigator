@@ -14,7 +14,7 @@ object EventProcessor {
         if (eventProcessor.hasSubscribers()) {
             return eventProcessor.onNext(e)
         } else {
-            Log.d("EventProcessor:onNext", "No subscribers")
+            Log.d("EventProcessor:onNext", "----------- No subscribers")
         }
     }
 

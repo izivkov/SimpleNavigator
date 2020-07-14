@@ -10,6 +10,7 @@ object User {
     var userName: String = ""
 
     fun getUser(context: Context): String {
+        var userNameRet = ""
         if (userName.isNotBlank()) {
             return userName
         }
@@ -21,10 +22,19 @@ object User {
 
         for (account in list) {
             if (account.type.equals("com.google", ignoreCase = true)) {
-                userName = account.name.split('@')[0]
-                return userName
+                userNameRet = account.name.split('@')[0]
+                break
             }
         }
-        return ""
+
+        if (userNameRet.isBlank()) {
+            userNameRet = android.os.Build.MODEL
+            if (userNameRet.isBlank()) {
+                userNameRet = "Unknown User"
+            }
+        }
+
+        userName = userNameRet
+        return userNameRet
     }
 }

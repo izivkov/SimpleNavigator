@@ -47,7 +47,7 @@ object FirebaseConnection {
                     EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseSuccess)
                     Log.d(
                         "FirebaseConnection",
-                        "############ sending SubscribedToFirebaseSuccess event"
+                        "Sending SubscribedToFirebaseSuccess event for topic $topic"
                     )
                 } else {
                     EventProcessor.onNext(EventProcessor.ProgressEvents.SubscribedToFirebaseFailed)
