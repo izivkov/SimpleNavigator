@@ -27,11 +27,10 @@ object NearbyConnection {
             endpointId: String,
             payload: Payload
         ) {
-            val payloadStr = String(
+            val topic = String(
                 payload.asBytes()!!,
                 StandardCharsets.UTF_8
             )
-            val topic = "" + Integer(payloadStr).toInt()
 
             val event: EventProcessor.ProgressEvents =
                 EventProcessor.ProgressEvents.NearbyConnectionPayload
@@ -57,6 +56,11 @@ object NearbyConnection {
                     NearbyConnection.TAG,
                     "onEndpointFound: endpoint found, connecting"
                 )
+
+                // INZ new
+                connectionsClient!!.stopDiscovery()
+                // INZ end
+
                 connectionsClient!!.requestConnection(
                     connectionName,
                     endpointId,
@@ -233,5 +237,5 @@ object NearbyConnection {
 
     private const val TAG = "NearbyConnection"
     private val STRATEGY =
-        Strategy.P2P_POINT_TO_POINT
+        Strategy.P2P_CLUSTER
 }

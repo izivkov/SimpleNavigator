@@ -33,7 +33,9 @@ import com.google.gson.Gson
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
 import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
+import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
+import org.avmedia.simplenavigator.nearby.NearbyConnection
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -104,6 +106,45 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             .observeOn(PairConnection.whereToRun)
             .doOnNext {
                 when (it) {
+                    // Nearby
+                    NearbyConnectionSuccess -> {
+                        PairConnection.connectionStatus =
+                            PairConnection.ConnectionStatus.NEARBY_CONNECTED
+
+                        Toast.makeText(
+                            applicationContext,
+                            "Connection status: " + "SUCCESS",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    NearbyConnectionFailed -> {
+                        val pairButton: Button = findViewById(R.id.pair)
+                        Toast.makeText(
+                            applicationContext,
+                            "Connection status: " + "FAILED",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        resetPairButton()
+                    }
+
+                    EventProcessor.ProgressEvents.NearbyConnecting -> {
+                        PairConnection.connectionStatus =
+                            PairConnection.ConnectionStatus.NEARBY_CONNECTING
+                    }
+
+                    EventProcessor.ProgressEvents.NearbyConnectionPayload -> {
+                        PairConnection.currentTopic = "" + it.payload
+
+                        NearbyConnection.disconnect()
+
+                        FirebaseConnection.subscribe(PairConnection.currentTopic)
+                        PairConnection.connectionStatus =
+                            PairConnection.ConnectionStatus.SUBSCRIBING_TO_TOPIC
+                    }
+
+                    // Firebase
                     SubscribedToFirebaseFailed -> {
                         resetPairButton()
 
@@ -139,6 +180,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         remoteMarker.update(remoteLocation)
                     }
 
+                    CloseAllConnection -> {
+                        Toast.makeText(
+                            applicationContext,
+                            "Un-paired",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        resetPairButton()
+
+                        if (PairConnection.connectionStatus in PairConnection.ConnectionStatus.NEARBY_CONNECTED..PairConnection.ConnectionStatus.SUBSCRIBED_TO_TOPIC) {
+                            NearbyConnection.disconnect()
+                        }
+                        FirebaseConnection.unsubscribe(PairConnection.currentTopic)
+                        PairConnection.connectionStatus =
+                            PairConnection.ConnectionStatus.DISCONNECTED
+                    }
+
+                    // General
                     ActivityChangeEvent -> {
                         currentActivity = it.payload
 
@@ -156,33 +214,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         activityImage.setImageResource(res)
                     }
 
-                    NearbyConnectionSuccess -> {
-                        Toast.makeText(
-                            applicationContext,
-                            "Connection status: " + "SUCCESS",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-
-                    CloseAllConnection -> {
-                        Toast.makeText(
-                            applicationContext,
-                            "Un-paired",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        resetPairButton()
-                    }
-
-                    NearbyConnectionFailed -> {
-                        val pairButton: Button = findViewById(R.id.pair)
-                        Toast.makeText(
-                            applicationContext,
-                            "Connection status: " + "FAILED",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        resetPairButton()
-                    }
                 }
             }
             .subscribe(
