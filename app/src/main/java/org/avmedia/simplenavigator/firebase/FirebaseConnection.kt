@@ -108,10 +108,7 @@ object FirebaseConnection {
                 )
             )
             .responseString { request, response, result ->
-//                Log.d("send", "***request: $request")
-//                Log.d("send", "***response: $response")
                 Log.d("send", "***result: $result")
-                // in release version getting: Failure: HTTP Exception 400 Bad Request
             }
 
 
