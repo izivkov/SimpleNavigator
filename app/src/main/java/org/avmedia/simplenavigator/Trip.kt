@@ -8,6 +8,7 @@ data class Trip(var lastLocation: Location = Location("dummyprovider")) {
     var topSpeed: Float = 0f
     var descent: Double = 0.0
     var ascent: Double = 0.0
+    var steps: Int = 0
     var isPaused: Boolean = false
     val MIN_DISTANCE_ACCURACY:Float = 50f
     val MIN_ALTITUDE_ACCURACY:Float = 5f
@@ -18,6 +19,7 @@ data class Trip(var lastLocation: Location = Location("dummyprovider")) {
         topSpeed = 0f
         descent = 0.0
         ascent = 0.0
+        steps = 0
         isPaused = false
     }
 

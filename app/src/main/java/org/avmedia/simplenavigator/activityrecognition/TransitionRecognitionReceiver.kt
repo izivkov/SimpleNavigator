@@ -28,7 +28,7 @@ class TransitionRecognitionReceiver : BroadcastReceiver() {
         }
     }
 
-    fun processTransitionResult(result: ActivityTransitionResult) {
+    private fun processTransitionResult(result: ActivityTransitionResult) {
         for (event in result.transitionEvents) {
             onDetectedTransitionEvent(event)
         }

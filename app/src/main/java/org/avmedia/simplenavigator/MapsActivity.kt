@@ -1,12 +1,16 @@
 package org.avmedia.simplenavigator
 
+import RouteTracker
+import RouteTrackerParams
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -28,7 +32,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.gson.Gson
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
@@ -53,20 +56,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
         )
 
         private const val REQUEST_CHECK_SETTINGS = 2
         private var unitConverter = UnitConverter()
     }
 
+    private lateinit var routeTracker: RouteTracker
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var lastLocation: Location
 
     private lateinit var locationCallback: LocationCallback
     private lateinit var locationRequest: LocationRequest
-    private var locationUpdateState = false
     private val DEFAULT_ZOOM = 16.0f
     private val trip = Trip()
     private lateinit var mTransitionRecognition: TransitionRecognition
@@ -75,6 +79,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     var currentActivity: String = "UNKNOWN"
     lateinit var remoteMarker: RemoteDeviceMarker
+    lateinit var stepCounter: StepCounter
+    private val runInBackground: Boolean = true
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,11 +98,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupNewLocationHandler()
 
         createLocationRequest()
-        initTransitionRecognition()
+        initStepsCounter()
 
         createAppEventsSubscription()
         PairConnection.init()
-        // TimeoutManager.createTimerSubscription()
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -212,8 +217,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                         val activityImage: ImageView = findViewById(R.id.activity_image)
                         activityImage.setImageResource(res)
+
+                        routeTracker.newActivity(currentActivity)
                     }
 
+                    StepsChangeEvent -> {
+                        trip.steps = it.payload.toInt()
+                    }
                 }
             }
             .subscribe(
@@ -227,11 +237,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     fun initTransitionRecognition() {
         mTransitionRecognition = TransitionRecognition()
+        mTransitionRecognition.startTracking(this)
+    }
+
+    fun initStepsCounter() {
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        stepCounter = StepCounter(sensorManager)
     }
 
     fun setupNewLocationHandler() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
+
+                // XXX location update
+
                 super.onLocationResult(p0)
 
                 lastLocation = p0.lastLocation
@@ -263,6 +282,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         )
                     )
                 }
+
+                routeTracker.add(latLong)
             }
         }
     }
@@ -273,7 +294,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         speedView.text = unitConverter.formatSpeedHtml((lastLocation.speed * 3600 / 1000), "")
 
         val altView: TextView = findViewById<TextView>(R.id.altitude)
-        altView.text = unitConverter.formatMeters(lastLocation.altitude, "Altitude:")
+        altView.text = unitConverter.formatMeters(lastLocation.altitude, "Elevation:")
 
         trip.set(lastLocation)
         displayTrip()
@@ -285,6 +306,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         builder.setMessage("Are you sure you like to reset the data for the current trip?")
         builder.setPositiveButton("Yes") { dialog, which ->
             trip.reset()
+            routeTracker.clear()
+            stepCounter.clear()
             displayTrip()
             Toast.makeText(applicationContext, "Trip data reset", Toast.LENGTH_SHORT).show()
         }
@@ -299,6 +322,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         builder.setTitle("Exiting App")
         builder.setMessage("Are you sure you like to exit? Trip data will be lost")
         builder.setPositiveButton("Yes") { dialog, which ->
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            mTransitionRecognition.stopTracking()
+
+            routeTracker.clear()
+            stepCounter.clear()
+
             this.finish()
         }
         builder.setNegativeButton("No") { dialog, which ->
@@ -316,6 +345,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         val pauseResumeButton: ImageButton = findViewById(R.id.pauseResumeButton)
         pauseResumeButton.setOnClickListener {
             trip.togglePause()
+            routeTracker.togglePause()
 
             val anim: Animation = AlphaAnimation(0.6f, 1.0f)
             anim.duration = 500 //You can manage the blinking time with this parameter
@@ -397,7 +427,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
 <li>Run the app on another device.</li>
 <li>Press the <b>Pair</b> buttons on both devices at the same time.</li>
-<li>The devices will connect to each other.</li>
+<li>The devices will connect to each other. (Be patient, this may take up to a minute)</li>
+<li>When the <b>PAIR</b> button stops blinking, and turns red, the devices are paired</li>
 </br>
 This is useful for group rides, locating a person in a mall, hiking with a group, etc.
 """, Html.FROM_HTML_MODE_LEGACY
@@ -418,7 +449,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         val topSpeed: TextView = findViewById<TextView>(R.id.topSpeed)
         topSpeed.text = unitConverter.formatSpeed(trip.topSpeed, "Top Speed:")
 
-
         val verticalDistanceTravelled: TextView =
             findViewById<TextView>(R.id.verticalDistanceTravelled)
 
@@ -429,6 +459,10 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         )
 
         verticalDistanceTravelled.text = ascentStr
+
+        val stepCounter: TextView =
+            findViewById<TextView>(R.id.stepCounter)
+        stepCounter.text = java.lang.String.format("%s: %d", "Steps", trip.steps)
     }
 
     /**
@@ -449,9 +483,11 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         map.setOnMarkerClickListener(this)
         map.isTrafficEnabled = true
 
-        val markerOptions = MarkerOptions()
         val drawable = ContextCompat.getDrawable(this@MapsActivity, R.drawable.ic_navigation_24px)
         remoteMarker = RemoteDeviceMarker(map, this@MapsActivity)
+
+        routeTracker = RouteTracker.getInstance(RouteTrackerParams(this@MapsActivity, googleMap))
+        initTransitionRecognition()
 
         getPermissions()
     }
@@ -552,25 +588,13 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
-                locationUpdateState = true
                 startLocationUpdates()
             }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        locationUpdateState = false
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        mTransitionRecognition.stopTracking()
-    }
-
     public override fun onResume() {
         super.onResume()
-        if (!locationUpdateState) {
-            startLocationUpdates()
-        }
-        mTransitionRecognition.startTracking(this)
     }
 
     private fun createLocationRequest() {
@@ -586,11 +610,9 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         val task = client.checkLocationSettings(builder.build())
 
         task.addOnSuccessListener {
-            locationUpdateState = true
             startLocationUpdates()
         }
         task.addOnFailureListener { e ->
-            // 6
             if (e is ResolvableApiException) {
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.

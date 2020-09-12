@@ -162,6 +162,16 @@
                 android:textColor="@color/colorWhite"
                 android:textSize="20sp" />
 
+            <TextView
+                android:id="@+id/stepCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/verticalDistanceTravelled"
+                android:layout_gravity="center_vertical"
+                android:text=""
+                android:textColor="@color/colorWhite"
+                android:textSize="20sp" />
+
         </RelativeLayout>
     </RelativeLayout>
 </fragment>
