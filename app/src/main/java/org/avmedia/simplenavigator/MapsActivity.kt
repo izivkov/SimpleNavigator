@@ -4,10 +4,8 @@ import RouteTracker
 import RouteTrackerParams
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
-import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.hardware.SensorManager
@@ -64,6 +62,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         private var unitConverter = UnitConverter()
     }
 
+    private var locationActive: Boolean = false
     private lateinit var routeTracker: RouteTracker
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -97,11 +96,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setupButtons()
         setupNewLocationHandler()
 
-        createLocationRequest()
+        // createLocationRequest()
         initStepsCounter()
 
         createAppEventsSubscription()
         PairConnection.init()
+        initTransitionRecognition()
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -237,7 +237,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     fun initTransitionRecognition() {
         mTransitionRecognition = TransitionRecognition()
-        mTransitionRecognition.startTracking(this)
     }
 
     fun initStepsCounter() {
@@ -487,7 +486,6 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         remoteMarker = RemoteDeviceMarker(map, this@MapsActivity)
 
         routeTracker = RouteTracker.getInstance(RouteTrackerParams(this@MapsActivity, googleMap))
-        initTransitionRecognition()
 
         getPermissions()
     }
@@ -525,13 +523,19 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         )
         if (requestCode == PERMISSION_REQUEST_ACTIVITY_RECOGNITION) {
         }
-        if (requestCode == PERMISSION_REQUEST_CONTACTS) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (ActivityCompat.checkSelfPermission(
                     this,
                     android.Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 map.isMyLocationEnabled = true
+
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    null /* Looper */
+                )
             }
 
             if (runningQOrLater) {
@@ -548,7 +552,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
                 }
             }
         }
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+        if (requestCode == PERMISSION_REQUEST_CONTACTS) {
 
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -584,17 +588,22 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         )
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CHECK_SETTINGS) {
-            if (resultCode == Activity.RESULT_OK) {
-                startLocationUpdates()
-            }
-        }
+    public override fun onPause() {
+        super.onPause()
+        mTransitionRecognition.stopTracking()
+
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        locationActive = false
     }
 
     public override fun onResume() {
         super.onResume()
+        mTransitionRecognition.startTracking(this)
+
+        if (!locationActive) {
+            createLocationRequest()
+            locationActive = true
+        }
     }
 
     private fun createLocationRequest() {
@@ -614,6 +623,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         }
         task.addOnFailureListener { e ->
             if (e is ResolvableApiException) {
+                Log.d("", "addOnFailureListener, error: {}", e)
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
                 try {
@@ -624,7 +634,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
                         REQUEST_CHECK_SETTINGS
                     )
                 } catch (sendEx: IntentSender.SendIntentException) {
-                    // Ignore the error.
+                    Log.d("", "SendIntentException: addOnFailureListener, error: {}", e)
                 }
             }
         }
