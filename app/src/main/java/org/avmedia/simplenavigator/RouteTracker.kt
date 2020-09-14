@@ -15,7 +15,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
 
     companion object : SingletonHolder<RouteTracker, RouteTrackerParams>(::RouteTracker)
 
-    private var lineRoute: Polyline =
+    var lineRoute: Polyline =
         routeTrackerParams.googleMap.addPolyline(PolylineOptions().clickable(false))
     private val activityMarkers = mutableListOf<Marker>()
     private var lastTime = 0L
@@ -151,7 +151,10 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
         return timeToShow
     }
 
-    private fun stylePolyline(polyline: Polyline) {
+    private fun stylePolyline(polyline: Polyline?) {
+        if (polyline == null) {
+            return
+        }
 
         val PATTERN_DASH_LENGTH_PX = 20
         val PATTERN_GAP_LENGTH_PX = 20
