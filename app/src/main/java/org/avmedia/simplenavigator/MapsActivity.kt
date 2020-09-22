@@ -1,7 +1,6 @@
 package org.avmedia.simplenavigator
 
 import RouteTracker
-import RouteTrackerParams
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -30,6 +29,9 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.play.core.review.ReviewManager
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.gson.Gson
 import io.reactivex.disposables.Disposable
 import org.avmedia.simplenavigator.EventProcessor.ProgressEvents.*
@@ -54,13 +56,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION
         )
 
         private const val REQUEST_CHECK_SETTINGS = 2
         private var unitConverter = UnitConverter()
     }
+
+    private lateinit var reviewInfo: ReviewInfo
+    private lateinit var reviewManager: ReviewManager
 
     private var locationActive: Boolean = false
     private lateinit var routeTracker: RouteTracker
@@ -79,7 +83,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     var currentActivity: String = "UNKNOWN"
     lateinit var remoteMarker: RemoteDeviceMarker
     lateinit var stepCounter: StepCounter
-    private val runInBackground: Boolean = true
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,8 +105,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         createAppEventsSubscription()
         PairConnection.init()
         initTransitionRecognition()
+        initRating()
+        displayVersion()
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun displayVersion() {
+        val versionName = BuildConfig.VERSION_NAME
+
+        val versionText: TextView = findViewById(R.id.version)
+        versionText.text = versionName
+    }
+
+    private fun initRating() {
+        reviewManager = ReviewManagerFactory.create(applicationContext)
+    }
+
+    private fun askForReview() {
+
+        val requestFlow = reviewManager.requestReviewFlow()
+        requestFlow.addOnCompleteListener { request ->
+            if (request.isSuccessful) {
+                //Received ReviewInfo object
+                reviewInfo = request.result
+                val reviewInfo = request.result
+                val flow = reviewManager.launchReviewFlow(this@MapsActivity, reviewInfo)
+                flow.addOnCompleteListener { _ ->
+                    // The flow has finished. The API does not indicate whether the user
+                    // reviewed or not, or even whether the review dialog was shown. Thus, no
+                    // matter the result, we continue our app flow.
+
+                    this.finish()
+                }
+            } else {
+                // something went wrong
+                this.finish()
+            }
+        }
     }
 
     private fun createAppEventsSubscription(): Disposable =
@@ -218,7 +257,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                         val activityImage: ImageView = findViewById(R.id.activity_image)
                         activityImage.setImageResource(res)
 
-                        routeTracker.newActivity(currentActivity)
+                        routeTracker.newActivity(currentActivity, this@MapsActivity, map)
                     }
 
                     StepsChangeEvent -> {
@@ -282,7 +321,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     )
                 }
 
-                routeTracker.add(latLong)
+                routeTracker.add(latLong, map)
             }
         }
     }
@@ -327,7 +366,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             routeTracker.clear()
             stepCounter.clear()
 
-            this.finish()
+            askForReview()
+
+            // this.finish()
         }
         builder.setNegativeButton("No") { dialog, which ->
         }
@@ -485,7 +526,7 @@ This is useful for group rides, locating a person in a mall, hiking with a group
         val drawable = ContextCompat.getDrawable(this@MapsActivity, R.drawable.ic_navigation_24px)
         remoteMarker = RemoteDeviceMarker(map, this@MapsActivity)
 
-        routeTracker = RouteTracker.getInstance(RouteTrackerParams(this@MapsActivity, googleMap))
+        routeTracker = RouteTracker()
 
         getPermissions()
     }

@@ -16,5 +16,6 @@
     <string name="info">Info</string>
     <string name="Unpair">Un-pair</string>
     <string name="Steps">Steps</string>
+    <string name="version">version</string>
 
 </resources>

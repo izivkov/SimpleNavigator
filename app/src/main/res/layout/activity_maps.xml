@@ -125,6 +125,17 @@
             android:textSize="16sp"
             tools:ignore="RelativeOverlap" />
 
+        <TextView
+            android:id="@+id/version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_above="@id/exitButton"
+            android:padding="6dp"
+            android:textSize="12sp"
+            android:background="#07000000"
+            android:text=""></TextView>
+
         <RelativeLayout
             android:id="@+id/relativeLayoutTrip"
             android:layout_width="wrap_content"

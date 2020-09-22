@@ -5,29 +5,24 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.*
 import org.avmedia.simplenavigator.MapsActivity
 import org.avmedia.simplenavigator.R
-import org.avmedia.simplenavigator.utils.SingletonHolder
 import org.avmedia.simplenavigator.utils.Utils.getMarkerIconFromDrawable
 import kotlin.random.Random
 
-data class RouteTrackerParams(val mapsActivity: MapsActivity, val googleMap: GoogleMap)
+class RouteTracker {
 
-data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
-
-    companion object : SingletonHolder<RouteTracker, RouteTrackerParams>(::RouteTracker)
-
-    var lineRoute: Polyline =
-        routeTrackerParams.googleMap.addPolyline(PolylineOptions().clickable(false))
+    lateinit var lineRoute: Polyline
     private val activityMarkers = mutableListOf<Marker>()
     private var lastTime = 0L
     private var isPaused = false
     private var lastActivity: String = "UNKNOWN"
 
-    init {
-        stylePolyline(lineRoute)
-    }
-
-    fun add(newPoint: LatLng) {
+    fun add(newPoint: LatLng, googleMap: GoogleMap) {
         val MAX_POINTS = 1000
+
+        if (!this::lineRoute.isInitialized) {
+            lineRoute = googleMap.addPolyline(PolylineOptions().clickable(false))
+            stylePolyline(lineRoute)
+        }
 
         if (!isPaused && isTimeToShow() && isFarEnough(newPoint)) {
 
@@ -47,9 +42,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
     }
 
     fun clear() {
-        val points = lineRoute.points
-        points.clear()
-        lineRoute.points = points
+        lineRoute.points.clear()
         lastTime = 0L
 
         for (marker in activityMarkers) {
@@ -76,7 +69,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
         isPaused = false
     }
 
-    fun newActivity(activity: String) {
+    fun newActivity(activity: String, mapsActivity: MapsActivity, googleMap: GoogleMap) {
 
         if (activity == "STILL" || lastActivity == activity) {
             return
@@ -94,7 +87,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
         lastActivity = activity
 
         val lastPoint = lineRoute.points.last()
-        var marker = routeTrackerParams.googleMap.addMarker(
+        var marker = googleMap.addMarker(
             MarkerOptions().position(
                 LatLng(
                     lastPoint.latitude,
@@ -103,7 +96,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
             )
         )
 
-        val drawable = ContextCompat.getDrawable(routeTrackerParams.mapsActivity, res)
+        val drawable = ContextCompat.getDrawable(mapsActivity, res)
         val markerIcon = getMarkerIconFromDrawable(drawable)
 
         marker.setIcon(markerIcon)
@@ -115,7 +108,7 @@ data class RouteTracker(var routeTrackerParams: RouteTrackerParams) {
         activityMarkers.add(marker)
     }
 
-    // support funtions
+    // support functions
     private fun isFarEnough(newPoint: LatLng): Boolean {
         val MIN_DISTANCE_FROM_LAST_POINT = 10
 
