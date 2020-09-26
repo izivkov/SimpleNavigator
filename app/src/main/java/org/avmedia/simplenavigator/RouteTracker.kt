@@ -42,7 +42,10 @@ class RouteTracker {
     }
 
     fun clear() {
-        lineRoute.points.clear()
+        val points = lineRoute.points
+        points.clear()
+        lineRoute.points = points
+
         lastTime = 0L
 
         for (marker in activityMarkers) {

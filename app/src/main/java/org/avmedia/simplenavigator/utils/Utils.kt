@@ -33,7 +33,7 @@ object Utils {
         INTERCEPT
     }
 
-    fun beep(tone: TONE, duration: Int = 150) {
+    fun beep(tone: TONE = TONE.PIP, duration: Int = 150) {
         val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         val tgTone = when (tone) {
             TONE.INTERCEPT -> {

@@ -39,6 +39,7 @@ import org.avmedia.simplenavigator.activityrecognition.TransitionRecognition
 import org.avmedia.simplenavigator.firebase.FirebaseConnection
 import org.avmedia.simplenavigator.firebase.ShareLocationMessage
 import org.avmedia.simplenavigator.nearby.NearbyConnection
+import org.avmedia.simplenavigator.utils.Utils.beep
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -53,8 +54,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             Manifest.permission.READ_CONTACTS,
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.ACCESS_WIFI_STATE,
-            Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
         )
@@ -256,6 +255,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
                         val activityImage: ImageView = findViewById(R.id.activity_image)
                         activityImage.setImageResource(res)
+
+                        beep()
 
                         routeTracker.newActivity(currentActivity, this@MapsActivity, map)
                     }
