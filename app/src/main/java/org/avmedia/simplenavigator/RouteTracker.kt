@@ -42,9 +42,11 @@ class RouteTracker {
     }
 
     fun clear() {
-        val points = lineRoute.points
-        points.clear()
-        lineRoute.points = points
+        if (this::lineRoute.isInitialized) {
+            val points = lineRoute.points
+            points.clear()
+            lineRoute.points = points
+        }
 
         lastTime = 0L
 
@@ -73,6 +75,9 @@ class RouteTracker {
     }
 
     fun newActivity(activity: String, mapsActivity: MapsActivity, googleMap: GoogleMap) {
+        if (!this::lineRoute.isInitialized) {
+            return
+        }
 
         if (activity == "STILL" || lastActivity == activity) {
             return
@@ -115,9 +120,10 @@ class RouteTracker {
     private fun isFarEnough(newPoint: LatLng): Boolean {
         val MIN_DISTANCE_FROM_LAST_POINT = 10
 
-        if (lineRoute == null || lineRoute.points == null || lineRoute.points.size < 1) {
+        if (!this::lineRoute.isInitialized || lineRoute.points == null || lineRoute.points.size < 1) {
             return true
         }
+
         val lastLongLat = lineRoute.points.last()
         val lastLocation = Location("")
         lastLocation.latitude = lastLongLat.latitude
