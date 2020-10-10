@@ -54,7 +54,7 @@ class UnitConverter {
         val country = getCountry()
 
         when(country) {
-            "US", "UK", "LR", "MM" -> return UNIT_TYPE.IMPERIAL
+            "US", "UK", "GB", "LR", "MM" -> return UNIT_TYPE.IMPERIAL
             else -> return UNIT_TYPE.METRIC
         }
     }
