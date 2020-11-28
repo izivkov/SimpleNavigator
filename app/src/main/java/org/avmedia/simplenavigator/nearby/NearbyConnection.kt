@@ -8,7 +8,6 @@ import org.avmedia.simplenavigator.EventProcessor
 import org.avmedia.simplenavigator.PairConnection.myTopic
 import java.nio.charset.StandardCharsets
 
-/** Activity controlling the Rock Paper Scissors game  */
 object NearbyConnection {
     private lateinit var context: Context
     private val connectionName = "simpleNavigatorConnection"
